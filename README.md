@@ -83,14 +83,20 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 ### Comparing results from other vendors
 - Please be aware of each vendors default configurations. Some vendors have resultset caching on by default and running against a vendor that has it off by default is not an accurate test.
 - Please be aware when vendors want a cold start.  Not that many database are running from a cold start.  While it might be a valid test for some vendors, for most is is not doing anything except giving vendor A a talking point over vendor B.  
-- Be aware of ETL being done in the database.  Soem vendors want ETL done in their database and want this measure as part of the loading process.  With data lake architectures being the dominate architecture of today, your ETL should be done by a distribute compute engine like Spark.  Doing ETL in one of the most expensive resources that you can deploy in the cloud is not a good idea.  Plus this also gets you caught up in vendor lock in when you use specialize non-standard SQL.
+- Be aware of ETL being done in the database.  Some vendors want ETL done in their database and want this measure as part of the loading process.  With data lake architectures being the dominate architecture of today, your ETL should be done by a distribute compute engine like Spark.  Doing ETL in one of the most expensive resources that you can deploy in the cloud is not a good idea.  Plus this also gets you caught up in vendor lock in when you use specialize non-standard SQL.
 - It is okay to have some slight tweaks done to the SQL statements.  If you can spend 10 minutes adjusting a query that take an hour so that it takes minutes, then consider it.  Each vendor should do some minor mondifications to show how their product can potentially perform.
 
 
-
+### Interepting the results
+- Once you have the executions complete you should analyze the results
+   - Which DWU was the fasest?
+   - Which resource class was the fastest?
+   - Which resource class was the smallest and close to the fastest?  If a small resource class is 10% slower than the medium and the medium 5% slower then a large, then you need to understand the trade off.  Should I run more queries at x% slower, but be able to run more of them?  Review this link on resource classes https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#concurrency-maximums-for-resource-classes and understand how many slots they each take based upon the size of your warehouse.  If you have a DWU 10,000 with 400 slot and run a smallrc (dynamic) you can run 400/12 = 33 concurrent queries.  If you run a mediumrc you can run 400/40 = 10 concurreny queries. So is it more important to run 10 queries faster or 33 queries simultaneously?
 
 ## Enhancements to the .NET Core code
 - Set the DWU variable automatically
+- Scale the database automatically
 - Add a PowerBI report
-- Replication tables programatically
-- Turn on resultset caching programatically
+- Call the replication tables programatically and wait until their status is Ready.
+- Turn on resultset caching programatically based upon the run
+
