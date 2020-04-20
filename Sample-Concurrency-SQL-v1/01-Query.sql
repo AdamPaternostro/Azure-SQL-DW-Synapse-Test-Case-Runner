@@ -1,0 +1,5 @@
+SELECT 1
+OPTION(LABEL = '01-Query.1')
+
+SELECT 1
+OPTION(LABEL = '01-Query.2')

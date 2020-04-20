@@ -348,3 +348,5 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+Synapse-Test-Case-Runner/.vscode/launch.json
+Synapse-Test-Case-Runner/.vscode/tasks.json
