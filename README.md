@@ -26,7 +26,7 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 - Place your SQL statements in the Sample-Serial-SQL-v1 or Sample-Concurrency-SQL-v1 (you can create as many folders are you like)
 - Open the solution file Synapse-Test-Case-Runner in Visual Studio (you can also use VS Code for this)
 - Update the connection string SQL_CONNECTION_SMALL
-- Create your Execution Scenerios
+- Create your Execution Scenarios
 ```
             executionRuns.Add(new ExecutionRun()
             {
@@ -46,8 +46,8 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 - Run the test!  (Consider your first run a test so don't go too big)
 - Review the results in the tables in the Telemetry schema.  Run the stored procedure: AutomatedTestStatistics and use this as a bases for creating additional results.
 
-
 ## How to run a SQL DW / Synapse test
+
 ### First decide what you are going to test
 - Are you testing query performance?
 - Are you testing load performance?
@@ -68,10 +68,12 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 
 ### Running the test
 - Have your data to be loaded to Synapse in an Azure storage account in the same region
+  - Please note: You should put in a request to raise Azure quota for Synapse. If you are on a short timeline and you might need to do your PoC in a different region than your normal region.  Please be flexible (since this is a PoC and not production).
 - Have your data in CSV or Parquet files and have a flat struture (not nested data types)
 - If you are concerned about testing the load loads:
      - Split the data: https://techcommunity.microsoft.com/t5/azure-synapse-analytics/how-to-maximize-copy-load-throughput-with-file-splits/ba-p/1314474
 - Load the data using the COPY (or Polybase) command: https://docs.microsoft.com/en-us/azure/data-factory/connector-azure-sql-data-warehouse#use-copy-statement
+   - You can also use ADF to load your tables for a more repeatable process
 - Load into Heap tables
 - Load from staging tables to your final tables 
   - Figure out the data should be distributed: round robin, ordered cluster columnstore, etc.
@@ -79,24 +81,28 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 - Turn on resultset caching for some of your tests (or at least ensure each vendor has it off...)
 - Create materialized views
 
-
 ### Comparing results from other vendors
 - Please be aware of each vendors default configurations. Some vendors have resultset caching on by default and running against a vendor that has it off by default is not an accurate test.
 - Please be aware when vendors want a cold start.  Not that many database are running from a cold start.  While it might be a valid test for some vendors, for most is is not doing anything except giving vendor A a talking point over vendor B.  
 - Be aware of ETL being done in the database.  Some vendors want ETL done in their database and want this measure as part of the loading process.  With data lake architectures being the dominate architecture of today, your ETL should be done by a distribute compute engine like Spark.  Doing ETL in one of the most expensive resources that you can deploy in the cloud is not a good idea.  Plus this also gets you caught up in vendor lock in when you use specialize non-standard SQL.
 - It is okay to have some slight tweaks done to the SQL statements.  If you can spend 10 minutes adjusting a query that take an hour so that it takes minutes, then consider it.  Each vendor should do some minor mondifications to show how their product can potentially perform.
+- When comparing vendors there are a few approaches:
+   1. Cost.  You can compare vendor A with a $200 an hour system to vendor B with a $200 an hours system.  Vendor A might have more hardware for this amount and might run faster (or slower).  Please make sure when you do cost you know the actual SKU you will be running.  Vendor A might have feature A as part of their standard SKI and Vendor B might require a higher edition for the feature.
+   2. Hardware:  You can compare vendor A with a 10 node system with vendor B with a {x} node system.  You might want to compare number of CPUs, RAM, etc.  You will never get an exact alignment (x core with y RAM).
+   - I perfer to go on cost since I am typically trying to run queries at the cheapest cost. The hardware will vary over time and you never get an exact alignment accross vendors and/or clouds.
 
-
-### Interepting the results
+### Interpreting the results
 - Once you have the executions complete you should analyze the results
    - Which DWU was the fasest?
    - Which resource class was the fastest?
    - Which resource class was the smallest and close to the fastest?  If a small resource class is 10% slower than the medium and the medium 5% slower then a large, then you need to understand the trade off.  Should I run more queries at x% slower, but be able to run more of them?  Review this link on resource classes https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#concurrency-maximums-for-resource-classes and understand how many slots they each take based upon the size of your warehouse.  If you have a DWU 10,000 with 400 slot and run a smallrc (dynamic) you can run 400/12 = 33 concurrent queries.  If you run a mediumrc you can run 400/40 = 10 concurreny queries. So is it more important to run 10 queries faster or 33 queries simultaneously?
+- Is there a slow running query?  Check out the Query Store to see what is going on with the actual execution plan.  Moving lots of data between worker nodes is typically a bottleneck to look for.
 
 ## Enhancements to the .NET Core code
 - Set the DWU variable automatically
 - Scale the database automatically
 - Add a PowerBI report
 - Call the replication tables programatically and wait until their status is Ready.
-- Turn on resultset caching programatically based upon the run
+- Turn on result set caching programmatically based upon the run
+
 
