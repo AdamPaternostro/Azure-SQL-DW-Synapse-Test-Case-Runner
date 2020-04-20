@@ -1,13 +1,14 @@
 # Azure-SQL-DW-Synapse-Test-Case-Runner
 The below will help you perform a data warehouse test on SQL DW / Synapse and help you understand how to compare the results to other vendors. There is also a cross platform tool for running test cases in a serial or concurrently and log the results to a set of tables to see the results.
 
+Want to know how to execute a data warehouse bake off.  Jump down to: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Case-Runner#how-to-run-a-sql-dw--synapse-test 
 
-## How you use
+## How to run the Code
 - Create your database in Azure
 - Load your database with data
 - Write your queries and ensure they are working
 - Add Label statements to your queries: OPTION(LABEL = 'my-query.1') - you can use .2 for SQL scripts that have multiple SQL statements
-- Exeucte the scripts in the SQL Scripts folder to setup the telemetry capture tables
+- Execute the scripts in the SQL Scripts folder to setup the telemetry capture tables
 - Create user ids in SQL Server
     ```
     -- Run in Master Database
@@ -108,7 +109,7 @@ The below will help you perform a data warehouse test on SQL DW / Synapse and he
       - Please make sure you are comparing list price to list price without discounts.  Vendors have a habit of giving you the best price to get you on their platform and then you fail to get those same discounts upon your renewal.  Comparing list price or list reserved instance price (since they are published) keeps you from getting a getting a surprise when your renewel occurs.
    2. Hardware:  You can compare vendor A with a 10 node system with vendor B with a {x} node system.  You might want to compare number of CPUs, RAM, etc.  You will never get an exact alignment (x core with y RAM).
    - I perfer to go on cost since I am typically trying to run queries at the cheapest cost. The hardware will vary over time and you never get an exact alignment accross vendors and/or clouds.
-
+- Your data warehouse is just a part of your architecture.  You should treat is like a black box that you send SQL statements and get results.  Surround your database with cheaper components for ETL, reporting, etc.  You should be able to switch out your warehouse just like any other component of your architecture.  Avoid tying into vendor specific features.
 
 ### Interpreting the results
 - Once you have the executions complete you should analyze the results
@@ -118,11 +119,23 @@ The below will help you perform a data warehouse test on SQL DW / Synapse and he
 - Is there a slow running query?  Check out the Query Store to see what is going on with the actual execution plan.  Moving lots of data between worker nodes is typically a bottleneck to look for.
 
 
+### Common Questions
+1. How do you choose the appropriate Azure Database?  Azure has lots of choices from standard database to hyerscale database to data warehouses.  Here is how I see them:
+   - Standard database are what you use for your OLTP applications.  You have transactions and daily reporting taking place in these databasees.
+   - Hyerscale databases allow your OLTP transaction database to store more data, like a warehouse and have many readers for more reporting.  These can grow to 100's of TBs.  
+   - Data Warehouse has many worker nodes designed to distribute your query to multiple nodes that all work together on the __same__ query.  These can grow to 100's of TBs to Petabytes.
+   - My rule of thumb for a determining if you need a Hyerscale versus a Warehouse is this:
+       1. Does your query actually run or does it run out of memory?  If your query runs out of memory on Hyperscale (and it is large instance) then you need to look at a warehouse.  You cannot scale up any more.
+       2. Are you joining 2+ billion rows or 100's of billions of rows?  You are looking at a data warehouse.  Having billion row tables is SQL Server does not necessary mean you need a data warehouse.
+       3. If you have lots of data, but issue small requests against the data, then you are probably fine with Hyperscale.
+   - The best part of Azure is that you can change services with realative ease.  Dumping your data our of your Hyerscale and importing to Synapse is not that difficult and then you can easily test both.
+2. How does SQL On-Demand fit into the picture?
+   - SQL OD lets you run your queries directly against your data lake.  This is a great feature and is great for items like populating Azure Analysis Service or Power BI.  If you are not in a hurry for the query to execute it gives you choices for other strategies.
+
+
 ## Enhancements to the .NET Core code
 - Set the DWU variable automatically
 - Scale the database automatically
 - Add a PowerBI report
 - Call the replication tables programatically and wait until their status is Ready.
 - Turn on result set caching programmatically based upon the run
-
-
