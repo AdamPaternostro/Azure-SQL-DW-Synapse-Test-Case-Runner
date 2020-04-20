@@ -1,5 +1,6 @@
 # Azure-SQL-DW-Synapse-Test-Case-Runner
-Cross platform tool for running test cases in a serial or concurrently and log the results to a set of tables to see the results.
+The below will help you perform a data warehouse test on SQL DW / Synapse and help you understand how to compare the results to other vendors. There is also a cross platform tool for running test cases in a serial or concurrently and log the results to a set of tables to see the results.
+
 
 ## How you use
 - Create your database in Azure
@@ -46,6 +47,7 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 - Run the test!  (Consider your first run a test so don't go too big)
 - Review the results in the tables in the Telemetry schema.  Run the stored procedure: AutomatedTestStatistics and use this as a bases for creating additional results.
 
+
 ## How to run a SQL DW / Synapse test
 
 ### First decide what you are going to test
@@ -54,22 +56,31 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 - Are you testing concurrency?
 - Do you have a baseline set of data?  
    - If you are replacing an existing system do you have a sample set of queries that represent your workload (10 to 30 of them)?
+   - Can you run the queries on this system and obtain their timings?
    - Can the data be extracted from the existing system?  Sometimes the existing system does not have much free capacity to do the extract?
    - How are you going to get this data to the cloud if the existing system is on-prem?  Bulk move using an appliance or upload?  Upload is usually the easiest if you have the bandwidth.
 - How are you measuring the results?  
    - Are you measure row counts?
    - Are you checking the actual data?
 
+
 #### Notes about testing
-- If you are testing performance make sure you understand your goal of the query performance.  You should optomize your Synapse to run as many queries in the best times possible.  You should try to run as many queries in the smallest resource class on the smallest sized server as possible.  Your goad should be how to run the queries for as fast and cheap as possible.
+- If you are testing performance make sure you understand your goal of the query performance.  You should optomize your Synapse to run as many queries in the best times possible.  You should try to run as many queries in the smallest resource class on the smallest sized server as possible.  Your goal should be how to run the queries for as fast and cheap as possible.
 - If you are testing load performance, why?  A lot of customers test this and a one time load is just a one time load.  If vendor A takes 40 hours and vendor B takes 35 hours, does this really impact you and your business?  You probably would end up spending more than 5 hours trying to optomize vendors A load process to gain the 5 hours.  You should test a real life load scenerio, like you load once a night with 100 GB of data.
-- If you are testing concurrency, this is usually the least understood test.  Lots of people think that if you only support 30 concurrency that you can only have 30 people query the database at a time.  With a high level of users 300+, 30 concurrency is usually more than enough.  There is not a direct relation like people think.
+- If you are testing concurrency, this is usually the least understood test.  Lots of people think that if you only support 30 concurrency that you can only have 30 people query the database at a time.  If you have 300+ usrs, 30 concurrent queries is usually more than enough.  There is not a direct relation like people think.
 - If you are measuring results, then how much time does it take to stream the results somewhere?  The query might take 10 seconds, but streaming 2 billion rows to a client is a problem.  Ideally, run your queries and check their accuracy.  Then run your timing tests with a COUNT(*).
+
 
 ### Running the test
 - Have your data to be loaded to Synapse in an Azure storage account in the same region
-  - Please note: You should put in a request to raise Azure quota for Synapse. If you are on a short timeline and you might need to do your PoC in a different region than your normal region.  Please be flexible (since this is a PoC and not production).
-- Have your data in CSV or Parquet files and have a flat struture (not nested data types)
+  - Please note: You should put in a request to raise Azure quota for Synapse. If you are on a short timeline and you might need to do your PoC in a different region than your normal region.  Please be flexible since this is a PoC and not production.  Production customers take precedence over PoCs.
+- Have your data in CSV or Parquet files and have a flat struture (not nested data types).  If you are using CSV (or delimited), make sure they are valid. 
+    - For delimited files you will need to define:
+        - Your seperator (e.g. ',' comma)
+        - Your quote (e.g. '"' doublequote)
+        - Your escape character (e.g. '\' backslash).  Note: some vendors only process the escape character if the character is quoted (e.g. "Hi \"user\"")
+        - Your null values (e.g. 'NULL').  Note: some vendors are case senstive on this.
+        - Avoid mulitple lines (line feeds and/or carriage returns in your files).
 - If you are concerned about testing the load loads:
      - Split the data: https://techcommunity.microsoft.com/t5/azure-synapse-analytics/how-to-maximize-copy-load-throughput-with-file-splits/ba-p/1314474
 - Load the data using the COPY (or Polybase) command: https://docs.microsoft.com/en-us/azure/data-factory/connector-azure-sql-data-warehouse#use-copy-statement
@@ -81,6 +92,7 @@ Cross platform tool for running test cases in a serial or concurrently and log t
 - Turn on resultset caching for some of your tests (or at least ensure each vendor has it off...)
 - Create materialized views
 
+
 ### Comparing results from other vendors
 - Please be aware of each vendors default configurations. Some vendors have resultset caching on by default and running against a vendor that has it off by default is not an accurate test.
 - Please be aware when vendors want a cold start.  Not that many database are running from a cold start.  While it might be a valid test for some vendors, for most is is not doing anything except giving vendor A a talking point over vendor B.  
@@ -91,12 +103,14 @@ Cross platform tool for running test cases in a serial or concurrently and log t
    2. Hardware:  You can compare vendor A with a 10 node system with vendor B with a {x} node system.  You might want to compare number of CPUs, RAM, etc.  You will never get an exact alignment (x core with y RAM).
    - I perfer to go on cost since I am typically trying to run queries at the cheapest cost. The hardware will vary over time and you never get an exact alignment accross vendors and/or clouds.
 
+
 ### Interpreting the results
 - Once you have the executions complete you should analyze the results
    - Which DWU was the fasest?
    - Which resource class was the fastest?
-   - Which resource class was the smallest and close to the fastest?  If a small resource class is 10% slower than the medium and the medium 5% slower then a large, then you need to understand the trade off.  Should I run more queries at x% slower, but be able to run more of them?  Review this link on resource classes https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#concurrency-maximums-for-resource-classes and understand how many slots they each take based upon the size of your warehouse.  If you have a DWU 10,000 with 400 slot and run a smallrc (dynamic) you can run 400/12 = 33 concurrent queries.  If you run a mediumrc you can run 400/40 = 10 concurreny queries. So is it more important to run 10 queries faster or 33 queries simultaneously?
+   - Which resource class was the smallest and close to the fastest?  If a small resource class is 10% slower than the medium and the medium 5% slower then a large, then you need to understand the trade off.  Should I run more queries at x% slower, but be able to run more of them?  Review this link on resource classes https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#concurrency-maximums-for-resource-classes and understand how many slots they each take based upon the size of your warehouse.  If you have a DWU 10,000 with 400 slots and run a smallrc (dynamic) you can run 400/12 = 33 concurrent queries.  If you run a mediumrc (dynamic) you can run 400/40 = 10 concurreny queries. So is it more important to run 10 queries faster or 33 queries simultaneously?
 - Is there a slow running query?  Check out the Query Store to see what is going on with the actual execution plan.  Moving lots of data between worker nodes is typically a bottleneck to look for.
+
 
 ## Enhancements to the .NET Core code
 - Set the DWU variable automatically
