@@ -36,7 +36,7 @@ Just want to run the code? Jump down to the code: https://github.com/AdamPaterno
     - For delimited files you will need to define:
         - Your seperator (e.g. ',' comma)
         - Your quote (e.g. '"' doublequote)
-        - Your escape character (e.g. '\' backslash).  Note: some vendors only process the escape character if the character is quoted (e.g. "Hi \"user\"")
+        - Your escape character (e.g. '\' backslash).  Note: some vendors only process the escape character if the character is quoted (e.g. "Hi \\"user\\"")
         - Your null value (e.g. 'NULL').  Note: some vendors are case senstive on this.
         - Avoid mulitple lines (line feeds and/or carriage returns in your files).
 - If you are concerned about testing the load loads:
