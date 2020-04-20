@@ -6,6 +6,7 @@ Want to know how to execute a data warehouse bake off.  Jump down to: https://gi
 ## How to run the Code
 - Create your database in Azure
 - Load your database with data
+- Update statistics on your tables
 - Write your queries and ensure they are working
 - Add Label statements to your queries: OPTION(LABEL = 'my-query.1') - you can use .2 for SQL scripts that have multiple SQL statements
 - Execute the scripts in the SQL Scripts folder to setup the telemetry capture tables
@@ -87,6 +88,7 @@ Want to know how to execute a data warehouse bake off.  Jump down to: https://gi
 - Load the data using the COPY (or Polybase) command: https://docs.microsoft.com/en-us/azure/data-factory/connector-azure-sql-data-warehouse#use-copy-statement
    - You can also use ADF to load your tables for a more repeatable process
 - Load into Heap tables
+   - See best practices: https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/guidance-for-loading-data
 - Load from staging tables to your final tables 
   - Figure out the data should be distributed: round robin, ordered cluster columnstore, etc.
   - Ensure dimension tables are replicated.  Anything less than 2GB should be replicated.
