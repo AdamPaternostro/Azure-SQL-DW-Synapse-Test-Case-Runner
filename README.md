@@ -1,7 +1,7 @@
 # Azure-SQL-DW-Synapse-Test-Case-Runner
-The below will help you perform a data warehouse test on SQL DW / Synapse and help you understand how to compare the results to other vendors. There is also a cross platform tool for running test cases in a serial or concurrently and log the results to a set of tables to see the results.
+The below will help you perform a data warehouse test on SQL DW / Synapse and help you understand how to compare the results to other vendors. Included is actual code that will run the tests by automatically scaling your database to desired level, executing serial query performance testing, executing concurrent query testing and ensuring items like replicated tables are replicated before starting a run.  All the telemetry is saved so you can see the results.
 
-Just want to run the code? Jump down to the code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Case-Runner#how-to-run-the-code
+Just want to run the code? Jump down to the code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Case-Runner#running-against-adventureworks-sample-database
 The sample code works against a new data warehouse when you include the AdventureWorks sample database. 
 
 ## How to run a SQL DW / Synapse test
@@ -117,6 +117,7 @@ The sample code works against a new data warehouse when you include the Adventur
 - Run the C# code
 - Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL] to see the telemetry of your runs
 - Open the Power BI report (refresh the data) and explore the data (PowerBI coming soon)
+- Pause the database
 
 
 ## How to run the Code
@@ -161,12 +162,11 @@ The sample code works against a new data warehouse when you include the Adventur
 - Run the test!  (Consider your first run a test so don't go too big)
 - Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL] to see the telemetry of your runs
 - Open the Power BI report (refresh the data) and explore the data (PowerBI coming soon)
-
+- Pause the database
 
 
 ## Enhancements to the .NET Core code
 - Add test case to verify if query ran correctly
-- Scale the database automatically
 - Add a PowerBI report
 - Call the replication tables programatically and wait until their status is Ready.
 - Turn on result set caching programmatically based upon the run
