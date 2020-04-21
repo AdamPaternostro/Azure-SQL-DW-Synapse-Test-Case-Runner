@@ -17,16 +17,9 @@ namespace SynapseConcurrency
     /// </summary>
     public class Program
     {
-        // Prerequisites: 
-        // Create a scheam called "telemetry". 
-        // Run the SQL scripts in the SQL Scripts folder in your database.  
-        // You can build a PowerBI dashboard off these tables.
+        // Prerequisites: You need to have run the SQL scripts in the SQL Scripts folder
 
-        // Before you run a test:
-        // Scale the database if necessary.
-        // Run: The stored procedure [ReplicateTables]
-        // Run: The stored procedure [ReplicateTablesStatus] and make sure your replicated tables are in a "Ready" state.
-
+        // Manual Step:
         // Turn on resultset caching (depending on your test case)
         // In the Master Database: ALTER DATABASE [REPLACE_ME_DATABASE_NAME] SET RESULT_SET_CACHING ON;
         // To turn off: ALTER DATABASE [REPLACE_ME_DATABASE_NAME] SET RESULT_SET_CACHING OFF;
@@ -36,8 +29,12 @@ namespace SynapseConcurrency
         const string DATABASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "REPLACE-ME";
-        const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
-        static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c" }; // Which DWUs do you want to run this test at?
+        // Assumes all your passwords for all users are the same (if not change the connection string below)
+        const string PASSWORD = "REPLACE_me_01"; 
+        // Which DWUs do you want to run this test at. You can just do one.
+        static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c" }; 
+
+
 
         // A Global connection string for which has access to the Master Database so we can query the DWUs
         const string SQL_CONNECTION_MASTER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=master;Persist Security Info=False;" +
@@ -189,7 +186,7 @@ namespace SynapseConcurrency
                         CacheState = "Replicated Tables",
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = false,
+                        Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = "Standard",
@@ -202,7 +199,7 @@ namespace SynapseConcurrency
                         CacheState = "Replicated Tables",
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = false,
+                        Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = "Standard",
@@ -562,16 +559,6 @@ namespace SynapseConcurrency
                 // Sometimes we scale so fast it can fail since a scale is in progress
                 for (int i = 1; i <= 5; i++)
                 {
-                    DateTime now = DateTime.Now;
-                    if (now.Subtract(lastScaleDateTime).Minutes < 5)
-                    {
-                        int timeToSleep = (5 * 60 * 1000) - (now.Subtract(lastScaleDateTime).Minutes * 60 * 1000);
-                        Console.WriteLine($"**** The database was recently scaled.  Sleeping for {timeToSleep} milliseconds ***");
-                        System.Threading.Thread.Sleep(timeToSleep);
-                    }
-
-                    lastScaleDateTime = DateTime.Now;
-
                     // Issue the Scale command
                     using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
                     {
@@ -606,6 +593,8 @@ namespace SynapseConcurrency
                                 else if (scaleResult == "FAILED")
                                 {
                                     Console.WriteLine($"**** Database Scaling FAILED ***");
+                                    Console.WriteLine($"**** The database was recently scaled.  Sleeping for 5 minutes ***");
+                                    System.Threading.Thread.Sleep(5 * 60 * 1000); // wait 5 minutes
                                     break;
                                 }
                                 else if (scaleResult == "COMPLETED")
