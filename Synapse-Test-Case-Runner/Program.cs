@@ -12,7 +12,7 @@ namespace SynapseConcurrency
     /// Each query session id will be retrieved
     /// All the data will then be saved to the database.  The data from the sys.dm_pdw_exec_requests table will be captured.
     /// You can run the stored procedure [telemetry].[AutomatedTestStatistics] to view the latest run or for ideas around timing values.
-    /// The program will stop if it hits an error.  It does not continue.  
+    /// The program will stop if it hits an error.  It does not continue.  It does not save the telemetry for the current test case (prior test cases are saved).
     /// You can run this locally, but it would be best to create a VM in Azure in the same Region as your SQL Server and run from there (to reduce latency and avoid any internet blips)
     /// </summary>
     public class Program
@@ -31,21 +31,30 @@ namespace SynapseConcurrency
         // In the Master Database: ALTER DATABASE [REPLACE_ME_DATABASE_NAME] SET RESULT_SET_CACHING ON;
         // To turn off: ALTER DATABASE [REPLACE_ME_DATABASE_NAME] SET RESULT_SET_CACHING OFF;
 
-        // Turn on query store so we capture the actual execution plan
-        // ALTER DATABASE [REPLACE_ME_DATABASE_NAME] SET QUERY_STORE ON;
+
+        // SET THESE
+        const string DATEBASE_NAME = "REPLACE-ME";
+        const string SERVER_NAME = "REPLACE-ME";
+        const string SQL_ADMIN_NAME = "REPLACE-ME";
+        const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
+
+
+        // A Global connection string for which has access to the Master Database so we can query the DWUs
+        const string SQL_CONNECTION_MASTER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=master;Persist Security Info=False;" + 
+            "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
         // A connection string for each resource class you are testing
-        const string SQL_CONNECTION_SMALL = @"Server=tcp:REPLACE_ME_SERVER_NAME.database.windows.net,1433;Initial Catalog=REPLACE_ME_DATABASE_NAME;Persist Security Info=False;User ID=resource_class_small;Password=REPLACE_ME;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
+        const string SQL_CONNECTION_SMALL = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + "; Persist Security Info=False;" +
+            "User ID=resource_class_small;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
-        const string SQL_CONNECTION_MEDIUM = @"Server=tcp:REPLACE_ME_SERVER_NAME.database.windows.net,1433;Initial Catalog=REPLACE_ME_DATABASE_NAME;Persist Security Info=False;User ID=resource_class_medium;Password=REPLACE_ME;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
+        const string SQL_CONNECTION_MEDIUM = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + ";Persist Security Info=False;" +
+            "User ID=resource_class_medium;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
-        const string SQL_CONNECTION_LARGE = @"Server=tcp:REPLACE_ME_SERVER_NAME.database.windows.net,1433;Initial Catalog=REPLACE_ME_DATABASE_NAME;Persist Security Info=False;User ID=resource_class_large;Password=REPLACE_ME;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
+        const string SQL_CONNECTION_LARGE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + ";Persist Security Info=False;" +
+            "User ID=resource_class_large;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
-        const string SQL_CONNECTION_XLARGE = @"Server=tcp:REPLACE_ME_SERVER_NAME.database.windows.net,1433;Initial Catalog=REPLACE_ME_DATABASE_NAME;Persist Security Info=False;User ID=resource_class_xlarge;Password=REPLACE_ME;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
-
-
-        // **** CHANGE ME ***  What service level are we at?
-        const string DWUs = "10000";
+        const string SQL_CONNECTION_XLARGE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + ";Persist Security Info=False;" +
+            "User ID=resource_class_xlarge;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
 
         /// <summary>
@@ -53,6 +62,8 @@ namespace SynapseConcurrency
         /// </summary>
         static async Task Main(string[] args)
         {
+            string DWUs = GetDWUs();
+
             // Configuration Runs (these will all run in a loop)
             List<ExecutionRun> executionRuns = new List<ExecutionRun>();
 
@@ -63,7 +74,20 @@ namespace SynapseConcurrency
             //////////////////////////////////////////////////////////////////
             // Serial
             //////////////////////////////////////////////////////////////////
-            // Run Serial V1 on medium and large resource classes
+            // Run Serial V1 on small, medium and large resource classes
+            executionRuns.Add(new ExecutionRun()
+            {
+                CacheState = "Replicated Tables",
+                ConnectionString = SQL_CONNECTION_SMALL,
+                DWU = DWUs,
+                Enabled = true,
+                Interations = 5,
+                Mode = SerialOrConcurrentEnum.Serial,
+                OptLevel = "Standard",
+                ResourceClass = "smallrc",
+                ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
+            }); ;
+
             executionRuns.Add(new ExecutionRun()
             {
                 CacheState = "Replicated Tables",
@@ -74,7 +98,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Serial,
                 OptLevel = "Standard",
                 ResourceClass = "mediumrc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Serial-SQL-v1"
+                ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
             }); ;
 
             executionRuns.Add(new ExecutionRun()
@@ -87,7 +111,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Serial,
                 OptLevel = "Standard",
                 ResourceClass = "largerc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Serial-SQL-v1"
+                ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
             }); ;
 
 
@@ -95,6 +119,19 @@ namespace SynapseConcurrency
             executionRuns.Add(new ExecutionRun()
             {
                 CacheState = "Replicated Tables",
+                ConnectionString = SQL_CONNECTION_SMALL,
+                DWU = DWUs,
+                Enabled = true,
+                Interations = 5,
+                Mode = SerialOrConcurrentEnum.Serial,
+                OptLevel = "Standard",
+                ResourceClass = "smallrc",
+                ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
+            }); ;
+
+            executionRuns.Add(new ExecutionRun()
+            {
+                CacheState = "Replicated Tables",
                 ConnectionString = SQL_CONNECTION_MEDIUM,
                 DWU = DWUs,
                 Enabled = true,
@@ -102,7 +139,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Serial,
                 OptLevel = "Standard",
                 ResourceClass = "mediumrc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Serial-SQL-v2"
+                ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
             }); ;
 
             executionRuns.Add(new ExecutionRun()
@@ -115,7 +152,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Serial,
                 OptLevel = "Standard",
                 ResourceClass = "largerc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Serial-SQL-v2"
+                ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
             }); ;
 
 
@@ -134,7 +171,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Concurrent,
                 OptLevel = "Standard",
                 ResourceClass = "mediumrc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Concurrency-SQL-v1"
+                ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
             }); ;
 
             executionRuns.Add(new ExecutionRun()
@@ -147,7 +184,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Concurrent,
                 OptLevel = "Standard",
                 ResourceClass = "largerc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Concurrency-SQL-v1"
+                ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
             }); ;
 
 
@@ -162,7 +199,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Concurrent,
                 OptLevel = "Standard",
                 ResourceClass = "mediumrc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Concurrency-SQL-v2"
+                ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
             }); ;
 
             executionRuns.Add(new ExecutionRun()
@@ -175,7 +212,7 @@ namespace SynapseConcurrency
                 Mode = SerialOrConcurrentEnum.Concurrent,
                 OptLevel = "Standard",
                 ResourceClass = "largerc",
-                ScriptPath = @"C:\Azure-SQL-DW-Synapse-Test-Case-Runner\Sample-Concurrency-SQL-v2"
+                ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
             }); ;
 
             #endregion // Execution Runs
@@ -304,13 +341,14 @@ namespace SynapseConcurrency
                         {
                             string AutomatedTestId = command.ExecuteScalar().ToString();
 
-                            command.CommandText = "INSERT telemetry.AutomatedTest(AutomatedTestId, Description, Mode, StartTime, EndTime, DWU, CacheState, OptLevel, ScriptMods, ResourceClass)" +
+                            command.CommandText = "INSERT telemetry.AutomatedTest(AutomatedTestId, Description, Mode, Interations, StartTime, EndTime, DWU, CacheState, OptLevel, ScriptMods, ResourceClass)" +
                                                   "VALUES(" + AutomatedTestId + ", " +
-                                                  "'" + executionRun.Mode.ToString() + " Test - Iterations (" + executionRun.Interations.ToString() + ")', " +
-                                                  "'" + executionRun.Mode.ToString() + "', " +
+                                                  "'Automated Test Run by Synapse Test Runner'," +
+                                                  "'" + executionRun.Mode.ToString() + "'," +
+                                                  "'" + executionRun.Interations.ToString() + "'," +
                                                   "'" + startDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
                                                   "'" + endDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                                  "'" + DWUs + "', " + // we could make this dynamic
+                                                  "'" + DWUs + "', " + 
                                                   "'" + executionRun.CacheState + "'," +
                                                   "'" + executionRun.OptLevel + "'," +
                                                   "'" + executionRun.ScriptPath.Substring(executionRun.ScriptPath.LastIndexOf("\\") + 1) + "','" +
@@ -388,11 +426,44 @@ namespace SynapseConcurrency
             }
             finally
             {
-                Console.WriteLine("END:   " + label + " SESSION: " + label + " - " + (sessionId ?? "NULL"));
+                Console.WriteLine("END:   " + label + " -> SESSION: " + label + " - " + (sessionId ?? "NULL"));
             }
 
             return sessionId;
         } // Execute SQL
+
+        public static string GetDWUs()
+        {
+            string DWUs = null;
+            string sql = "SELECT sys.database_service_objectives.service_objective " +
+                           "FROM sys.database_service_objectives " +
+                                "INNER JOIN sys.databases " +
+                                        "ON sys.database_service_objectives.database_id = sys.databases.database_id " +
+                                       "AND sys.databases.name = '" + DATEBASE_NAME + "'";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
+                {
+                    connection.Open();
+
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        command.CommandTimeout = 0;
+                        DWUs = command.ExecuteScalar().ToString();
+                    }
+                }
+            }
+            catch (SqlException e)
+            {
+                Console.WriteLine("*********** ERROR: " + e.ToString());
+                Console.ReadKey();
+            }
+            finally
+            {
+            }
+
+            return DWUs;
+        } // GetDWUs
 
 
         // Do you want to run in parallel or serial

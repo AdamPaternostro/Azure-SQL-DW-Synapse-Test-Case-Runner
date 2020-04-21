@@ -24,7 +24,7 @@ SELECT CONVERT(FLOAT,DATEDIFF(millisecond, MIN(submit_time),MAX(end_time))) / CO
  WHERE session_id IN (SELECT session_id FROM [telemetry].AutomatedTestSession WHERE AutomatedTestId = @AutomatedTestId)
 
 SELECT [telemetry].[AutomatedTest].*,
-       [Label] AS qry_nm,
+       [Label] AS QueryName,
        [telemetry].[AutomatedTest_exec_requests].start_time AS QueryStartTime,
        [telemetry].[AutomatedTest_exec_requests].end_time AS QueryEndTime,
        CONVERT(FLOAT,DATEDIFF(millisecond,  [telemetry].[AutomatedTest_exec_requests].start_time, [telemetry].[AutomatedTest_exec_requests].end_time)) / 
@@ -38,9 +38,10 @@ SELECT [telemetry].[AutomatedTest].*,
  FROM [telemetry].[AutomatedTest]
       INNER JOIN [telemetry].[AutomatedTestSession]
               ON [telemetry].[AutomatedTest].[AutomatedTestId] = [telemetry].[AutomatedTestSession].[AutomatedTestId]
+             AND [telemetry].[AutomatedTest].[AutomatedTestId]  = @AutomatedTestId
       INNER JOIN [telemetry].[AutomatedTest_exec_requests]
               ON [telemetry].[AutomatedTest_exec_requests].session_id = [telemetry].[AutomatedTestSession].session_id
-             AND [telemetry].[AutomatedTest_exec_requests].label IS NOT NULL
+             AND [telemetry].[AutomatedTest_exec_requests].[label] IS NOT NULL
 ORDER BY [telemetry].[AutomatedTest].[AutomatedTestId], [telemetry].[AutomatedTest_exec_requests].[label]
 
 

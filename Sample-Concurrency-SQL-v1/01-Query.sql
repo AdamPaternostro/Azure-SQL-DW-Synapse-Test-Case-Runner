@@ -1,5 +1,8 @@
-SELECT 1
-OPTION(LABEL = '01-Query.1')
+-- This uses the AdventureWorks pre-populated sample database
+SELECT COUNT(*) 
+  FROM [dbo].[FactCurrencyRate]
+ OPTION(LABEL = '01-Query.1')
 
-SELECT 1
-OPTION(LABEL = '01-Query.2')
+SELECT COUNT(*) 
+  FROM [dbo].[FactInternetSalesReason]
+ OPTION(LABEL = '01-Query.2')

@@ -2,7 +2,7 @@
 The below will help you perform a data warehouse test on SQL DW / Synapse and help you understand how to compare the results to other vendors. There is also a cross platform tool for running test cases in a serial or concurrently and log the results to a set of tables to see the results.
 
 Just want to run the code? Jump down to the code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Case-Runner#how-to-run-the-code
-
+The sample code works against a new data warehouse when you include the AdventureWorks sample database. 
 
 ## How to run a SQL DW / Synapse test
 
@@ -79,6 +79,15 @@ Just want to run the code? Jump down to the code: https://github.com/AdamPaterno
 - Is there a slow running query?  Check out the Query Store to see what is going on with the actual execution plan.  Moving lots of data between worker nodes is typically a bottleneck to look for.
 
 
+### Step 05: Other Criteria
+- Security:
+   - How will the service integrate into your Azure subscription, virtual networks and overall compliance?
+   - How will row and column level security be applied?
+   - How are users setup and configured?
+- Dev Ops
+   - How the system work with your DevOps processes?
+
+
 ### Common Questions
 1. How do you choose the appropriate Azure Database?  Azure has lots of choices from standard database to hyerscale database to data warehouses.  Here is how I see them:
    - Standard database are what you use for your OLTP applications.  You have transactions and daily reporting taking place in these databasees.
@@ -93,6 +102,23 @@ Just want to run the code? Jump down to the code: https://github.com/AdamPaterno
    - SQL OD lets you run your queries directly against your data lake.  This is a great feature and is great for items like populating Azure Analysis Service or Power BI.  If you are not in a hurry for the query to execute it gives you choices for other strategies.  See this architecture: https://github.com/AdamPaternostro/Azure-Big-Data-and-Machine-Learning-Architecture
 
 
+## Running against AdventureWorks sample database
+- Create the data warehouse in Azure with the AdventureWorks sample data installed
+  - Tip: Create the SQL Admin account name with password "REPLACE_me_01" to make things a little simpiler
+- Whitelist your IP address on the SQL Sever
+- Run the scripts in the SQL Script folder in order 01, 02, etc.
+- Set the following values in the C#
+```
+        const string DATEBASE_NAME = "REPLACE-ME";
+        const string SERVER_NAME = "REPLACE-ME";
+        const string SQL_ADMIN_NAME = "sqlAdmin";        
+        const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
+```
+- Run the C# code
+- Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL]
+- Open the Power BI report and explore the data (PowerBI coming soon)
+
+
 ## How to run the Code
 - Create your database in Azure
 - Load your database with data
@@ -100,22 +126,6 @@ Just want to run the code? Jump down to the code: https://github.com/AdamPaterno
 - Write your queries and ensure they are working
 - Add Label statements to your queries: OPTION(LABEL = 'my-query.1') - you can use .2 for SQL scripts that have multiple SQL statements
 - Execute the scripts in the SQL Scripts folder to setup the telemetry capture tables
-- Create user ids in SQL Server
-    ```
-    -- Run in Master Database
-    CREATE LOGIN resource_class_small WITH PASSWORD = 'REPLACE_ME' 
-    GO
-    CREATE USER resource_class_small FOR LOGIN resource_class_small WITH DEFAULT_SCHEMA = dbo
-    GO
-
-    -- Run in Your Database
-    CREATE USER resource_class_small FOR LOGIN resource_class_small WITH DEFAULT_SCHEMA = dbo
-    GO
-    EXEC sp_addrolemember N'db_owner', N'resource_class_small'
-    GO
-    EXEC sp_addrolemember 'smallrc', 'resource_class_small';
-    GO
-    ```
 - Place your SQL statements in the Sample-Serial-SQL-v1 or Sample-Concurrency-SQL-v1 (you can create as many folders are you like)
 - Open the solution file Synapse-Test-Case-Runner in Visual Studio (you can also use VS Code for this)
 - Update the connection string SQL_CONNECTION_SMALL
@@ -137,11 +147,11 @@ Just want to run the code? Jump down to the code: https://github.com/AdamPaterno
 - Run the stored procedure ReplicateTables on the server (this will replicate ALL tables set with Replicate distribution, you can add exceptions if you like)
 - Run the stored procedure ReplicateTablesStatus (wait until they are all in a "Ready" state)
 - Run the test!  (Consider your first run a test so don't go too big)
-- Review the results in the tables in the Telemetry schema.  Run the stored procedure: AutomatedTestStatistics and use this as a bases for creating additional results.
+- Review the results in the tables in the Telemetry schema.  Run the stored procedure: [telemetry].[AutomatedTestStatistics_ALL] and use this as a bases for creating additional results.
 
 
 ## Enhancements to the .NET Core code
-- Set the DWU variable automatically
+- Add test case to verify if query ran correctly
 - Scale the database automatically
 - Add a PowerBI report
 - Call the replication tables programatically and wait until their status is Ready.
