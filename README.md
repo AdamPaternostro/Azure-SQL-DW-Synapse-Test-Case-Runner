@@ -115,21 +115,33 @@ The sample code works against a new data warehouse when you include the Adventur
         const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
 ```
 - Run the C# code
-- Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL]
-- Open the Power BI report and explore the data (PowerBI coming soon)
+- Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL] to see the telemetry of your runs
+- Open the Power BI report (refresh the data) and explore the data (PowerBI coming soon)
 
 
 ## How to run the Code
 - Create your database in Azure
+- Execute the scripts in the SQL Scripts folder to setup the telemetry capture tables
 - Load your database with data
 - Update statistics on your tables
 - Write your queries and ensure they are working
-- Add Label statements to your queries: OPTION(LABEL = 'my-query.1') - you can use .2 for SQL scripts that have multiple SQL statements
-- Execute the scripts in the SQL Scripts folder to setup the telemetry capture tables
 - Place your SQL statements in the Sample-Serial-SQL-v1 or Sample-Concurrency-SQL-v1 (you can create as many folders are you like)
-- Open the solution file Synapse-Test-Case-Runner in Visual Studio (you can also use VS Code for this)
-- Update the connection string SQL_CONNECTION_SMALL
-- Create your Execution Scenarios
+   - NOTE: You need to name your queries files {xx}-{yourname}.sql.  
+        - {xx} should be 01, 02, etc.  This will determine the order in which the queries will be executed durign a serial test.
+        - {your-name} - a meaningful name of the file or test case
+- Add Label statements to your queries: OPTION(LABEL = '01-myquery.1') - you can use .2 for SQL scripts that have multiple SQL statements
+    - Note: Your labels names should follow the naming standard of {xx}-{your-name}.{query-number}
+        - {xx} - the name number as the file name
+        - {your-name} - a meaningful name of the file or test case
+        - {query-number} - the first query in the file should start with 1, then 2, etc.
+- Open the solution file Synapse-Test-Case-Runner in Visual Studio (you can also use VS Code for this) and update these values
+```
+        const string DATEBASE_NAME = "REPLACE-ME";
+        const string SERVER_NAME = "REPLACE-ME";
+        const string SQL_ADMIN_NAME = "sqlAdmin";        
+        const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
+```
+- Create your Execution Scenarios in the C# code
 ```
             executionRuns.Add(new ExecutionRun()
             {
@@ -147,7 +159,9 @@ The sample code works against a new data warehouse when you include the Adventur
 - Run the stored procedure ReplicateTables on the server (this will replicate ALL tables set with Replicate distribution, you can add exceptions if you like)
 - Run the stored procedure ReplicateTablesStatus (wait until they are all in a "Ready" state)
 - Run the test!  (Consider your first run a test so don't go too big)
-- Review the results in the tables in the Telemetry schema.  Run the stored procedure: [telemetry].[AutomatedTestStatistics_ALL] and use this as a bases for creating additional results.
+- Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL] to see the telemetry of your runs
+- Open the Power BI report (refresh the data) and explore the data (PowerBI coming soon)
+
 
 
 ## Enhancements to the .NET Core code
