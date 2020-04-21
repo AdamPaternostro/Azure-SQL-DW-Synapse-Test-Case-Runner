@@ -37,7 +37,7 @@ namespace SynapseConcurrency
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "REPLACE-ME";
         const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
-        static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c" }; // Which DWUs do you want to run this test at?
+        static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c" }; // Which DWUs do you want to run this test at?
 
         // A Global connection string for which has access to the Master Database so we can query the DWUs
         const string SQL_CONNECTION_MASTER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=master;Persist Security Info=False;" +
@@ -575,26 +575,26 @@ namespace SynapseConcurrency
                         if (currentDWUs == DWU)
                         {
                             Console.WriteLine($"**** Database has Scaled to {currentDWUs} ***");
-                            Console.WriteLine($"**** Testing if Database {DATABASE_NAME} is Ready ***");
                             while (true)
                             {
                                 // make sure we can connect to the user's database
+                                Console.WriteLine($"**** Testing if Database {DATABASE_NAME} is Ready ***");
                                 try
                                 {
                                     using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_USER_DATABASE))
                                     {
                                         connection.Open();
 
-                                        using (SqlCommand command = new SqlCommand("SEELCT 1", connection))
+                                        using (SqlCommand command = new SqlCommand("SELECT 1", connection))
                                         {
-                                            Console.WriteLine($"**** User Database {DATABASE_NAME} is Ready ***");
                                             command.CommandTimeout = 0;
                                             command.ExecuteNonQuery();
+                                            Console.WriteLine($"**** User Database {DATABASE_NAME} is Ready ***");
                                             break;
                                         }
                                     }
                                 }
-                                catch
+                                catch (Exception userDatabase)
                                 {
                                     Console.WriteLine($"**** User Database {DATABASE_NAME} is Not Ready... (waiting 30 seconds and testing again) ***");
                                     System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
@@ -602,8 +602,13 @@ namespace SynapseConcurrency
                             }
                             break;
                         }
+                        else
+                        {
+                            Console.WriteLine($"**** Database is still Scaling... (waiting 30 seconds and testing again) ***");
+                            System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
+                        }
                     }
-                    catch
+                    catch (Exception masterDatabase)
                     {
                         Console.WriteLine($"**** Database is still Scaling... (waiting 30 seconds and testing again) ***");
                         System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
