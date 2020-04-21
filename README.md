@@ -112,7 +112,7 @@ The sample code works against a new data warehouse when you include the Adventur
         const string DATEBASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "sqlAdmin";        
-        const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
+        const string PASSWORD = "REPLACE_me_01"; 
 ```
 - Run the C# code
 - Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL] to see the telemetry of your runs
@@ -139,7 +139,7 @@ The sample code works against a new data warehouse when you include the Adventur
         const string DATEBASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "sqlAdmin";        
-        const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
+        const string PASSWORD = "REPLACE_me_01"; 
 ```
 - Create your Execution Scenarios in the C# code
 ```
