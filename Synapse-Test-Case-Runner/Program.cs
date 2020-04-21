@@ -33,7 +33,7 @@ namespace SynapseConcurrency
 
 
         // **** CHANGE ME ****
-        const string DATEBASE_NAME = "REPLACE-ME";
+        const string DATABASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "REPLACE-ME";
         const string PASSWORD = "REPLACE_me_01"; // assumming all the accounts have the same password (if not change the connection string below)
@@ -44,20 +44,20 @@ namespace SynapseConcurrency
             "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
         // A Global connection string for which has access to the User Database so we can run some SQL
-        const string SQL_CONNECTION_USER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + ";Persist Security Info=False;" +
+        const string SQL_CONNECTION_USER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + ";Persist Security Info=False;" +
             "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
         // A connection string for each resource class you are testing
-        const string SQL_CONNECTION_SMALL = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + "; Persist Security Info=False;" +
+        const string SQL_CONNECTION_SMALL = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + "; Persist Security Info=False;" +
             "User ID=resource_class_small;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
-        const string SQL_CONNECTION_MEDIUM = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + ";Persist Security Info=False;" +
+        const string SQL_CONNECTION_MEDIUM = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + ";Persist Security Info=False;" +
             "User ID=resource_class_medium;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
-        const string SQL_CONNECTION_LARGE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + ";Persist Security Info=False;" +
+        const string SQL_CONNECTION_LARGE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + ";Persist Security Info=False;" +
             "User ID=resource_class_large;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
-        const string SQL_CONNECTION_XLARGE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATEBASE_NAME + ";Persist Security Info=False;" +
+        const string SQL_CONNECTION_XLARGE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + ";Persist Security Info=False;" +
             "User ID=resource_class_xlarge;Password=" + PASSWORD + ";MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
 
 
@@ -66,355 +66,362 @@ namespace SynapseConcurrency
         /// </summary>
         static async Task Main(string[] args)
         {
-            foreach (string dwuScale in DWUsToTestList)
+            try
             {
-
-                // Get the number of DWUs SQL DW is running
-                string DWUs = GetDWUs();
-
-                if (DWUs != dwuScale)
+                foreach (string dwuScale in DWUsToTestList)
                 {
-                    // Is the database at the corect DWUs?  If not then let's scale it
-                    ScaleDatabase(dwuScale);
-                    DWUs = GetDWUs();
-                }
 
+                    // Get the number of DWUs SQL DW is running
+                    string DWUs = GetDWUs();
 
-                // Replicate all the tables marked for replication and wait until they are all replicated.  
-                // If you need to alter the stored procedures to adjust which tables to test (e.g. WHERE table_name IS NOT IN ('skip-me-table')
-                ReplicateTables();
-
-                // Configuration Runs (these will all run in a loop)
-                List<ExecutionRun> executionRuns = new List<ExecutionRun>();
-                executionRuns.Clear();
-
-                // **** CHANGE ME ****  
-                // Create your execution runs
-                #region Execution Runs
-
-                //////////////////////////////////////////////////////////////////
-                // Serial
-                //////////////////////////////////////////////////////////////////
-                // Run Serial V1 on small, medium and large resource classes
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_SMALL,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 5,
-                    Mode = SerialOrConcurrentEnum.Serial,
-                    OptLevel = "Standard",
-                    ResourceClass = "smallrc",
-                    ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
-                }); ;
-
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_MEDIUM,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 5,
-                    Mode = SerialOrConcurrentEnum.Serial,
-                    OptLevel = "Standard",
-                    ResourceClass = "mediumrc",
-                    ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
-                }); ;
-
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_LARGE,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 5,
-                    Mode = SerialOrConcurrentEnum.Serial,
-                    OptLevel = "Standard",
-                    ResourceClass = "largerc",
-                    ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
-                }); ;
-
-
-                // Run Serial V2 on medium and large resource classes
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_SMALL,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 5,
-                    Mode = SerialOrConcurrentEnum.Serial,
-                    OptLevel = "Standard",
-                    ResourceClass = "smallrc",
-                    ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
-                }); ;
-
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_MEDIUM,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 5,
-                    Mode = SerialOrConcurrentEnum.Serial,
-                    OptLevel = "Standard",
-                    ResourceClass = "mediumrc",
-                    ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
-                }); ;
-
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_LARGE,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 5,
-                    Mode = SerialOrConcurrentEnum.Serial,
-                    OptLevel = "Standard",
-                    ResourceClass = "largerc",
-                    ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
-                }); ;
-
-
-                //////////////////////////////////////////////////////////////////
-                // Concurrency
-                //////////////////////////////////////////////////////////////////
-
-                // Run Concurrency V1 on medium and large resource classes
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_MEDIUM,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 2,
-                    Mode = SerialOrConcurrentEnum.Concurrent,
-                    OptLevel = "Standard",
-                    ResourceClass = "mediumrc",
-                    ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
-                }); ;
-
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_LARGE,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 2,
-                    Mode = SerialOrConcurrentEnum.Concurrent,
-                    OptLevel = "Standard",
-                    ResourceClass = "largerc",
-                    ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
-                }); ;
-
-
-                // Run Concurrency V2 on medium and large resource classes
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_MEDIUM,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 2,
-                    Mode = SerialOrConcurrentEnum.Concurrent,
-                    OptLevel = "Standard",
-                    ResourceClass = "mediumrc",
-                    ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
-                }); ;
-
-                executionRuns.Add(new ExecutionRun()
-                {
-                    CacheState = "Replicated Tables",
-                    ConnectionString = SQL_CONNECTION_LARGE,
-                    DWU = DWUs,
-                    Enabled = true,
-                    Interations = 2,
-                    Mode = SerialOrConcurrentEnum.Concurrent,
-                    OptLevel = "Standard",
-                    ResourceClass = "largerc",
-                    ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
-                }); ;
-
-                #endregion // Execution Runs
-
-
-                // Read all the SQL Statements and do any necessary string replacements on the SQL
-                foreach (ExecutionRun executionRun in executionRuns)
-                {
-                    Console.WriteLine("Starting Execution Run: " + executionRun.ScriptPath);
-
-                    if (executionRun.Enabled == false)
+                    if (DWUs != dwuScale)
                     {
-                        Console.WriteLine("Skipping Execution Run: " + executionRun.ScriptPath);
-                        continue;
+                        // Is the database at the corect DWUs?  If not then let's scale it
+                        ScaleDatabase(dwuScale);
+                        DWUs = GetDWUs();
                     }
 
-                    // local variables
-                    List<string> sessionIds = new List<string>();
-                    sessionIds.Clear();
-                    List<SQLTask> sqlScripts = new List<SQLTask>();
-                    sqlScripts.Clear();
-                    string rawSQL = null;
-                    string fileName = "";
-                    int counter = 1;
-                    DateTime startDate = DateTime.UtcNow;
-                    DateTime endDate = DateTime.UtcNow;
-                    startDate = DateTime.UtcNow;
 
-                    // Prepare the scripts for execution
-                    // We want to do a search and replace on certain items since we might need to change table names or resource classes.
-                    for (int i = 1; i <= executionRun.Interations; i++)
+                    // Replicate all the tables marked for replication and wait until they are all replicated.  
+                    // If you need to alter the stored procedures to adjust which tables to test (e.g. WHERE table_name IS NOT IN ('skip-me-table')
+                    ReplicateTables();
+
+                    // Configuration Runs (these will all run in a loop)
+                    List<ExecutionRun> executionRuns = new List<ExecutionRun>();
+                    executionRuns.Clear();
+
+                    // **** CHANGE ME ****  
+                    // Create your execution runs
+                    #region Execution Runs
+
+                    //////////////////////////////////////////////////////////////////
+                    // Serial
+                    //////////////////////////////////////////////////////////////////
+                    // Run Serial V1 on small, medium and large resource classes
+                    executionRuns.Add(new ExecutionRun()
                     {
-                        foreach (var item in System.IO.Directory.GetFiles(executionRun.ScriptPath))
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_SMALL,
+                        DWU = DWUs,
+                        Enabled = true,
+                        Interations = 1,
+                        Mode = SerialOrConcurrentEnum.Serial,
+                        OptLevel = "Standard",
+                        ResourceClass = "smallrc",
+                        ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
+                    }); ;
+
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_MEDIUM,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 5,
+                        Mode = SerialOrConcurrentEnum.Serial,
+                        OptLevel = "Standard",
+                        ResourceClass = "mediumrc",
+                        ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
+                    }); ;
+
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_LARGE,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 5,
+                        Mode = SerialOrConcurrentEnum.Serial,
+                        OptLevel = "Standard",
+                        ResourceClass = "largerc",
+                        ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
+                    }); ;
+
+
+                    // Run Serial V2 on medium and large resource classes
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_SMALL,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 5,
+                        Mode = SerialOrConcurrentEnum.Serial,
+                        OptLevel = "Standard",
+                        ResourceClass = "smallrc",
+                        ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
+                    }); ;
+
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_MEDIUM,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 5,
+                        Mode = SerialOrConcurrentEnum.Serial,
+                        OptLevel = "Standard",
+                        ResourceClass = "mediumrc",
+                        ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
+                    }); ;
+
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_LARGE,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 5,
+                        Mode = SerialOrConcurrentEnum.Serial,
+                        OptLevel = "Standard",
+                        ResourceClass = "largerc",
+                        ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
+                    }); ;
+
+
+                    //////////////////////////////////////////////////////////////////
+                    // Concurrency
+                    //////////////////////////////////////////////////////////////////
+
+                    // Run Concurrency V1 on medium and large resource classes
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_MEDIUM,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 2,
+                        Mode = SerialOrConcurrentEnum.Concurrent,
+                        OptLevel = "Standard",
+                        ResourceClass = "mediumrc",
+                        ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
+                    }); ;
+
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_LARGE,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 2,
+                        Mode = SerialOrConcurrentEnum.Concurrent,
+                        OptLevel = "Standard",
+                        ResourceClass = "largerc",
+                        ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
+                    }); ;
+
+
+                    // Run Concurrency V2 on medium and large resource classes
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_MEDIUM,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 2,
+                        Mode = SerialOrConcurrentEnum.Concurrent,
+                        OptLevel = "Standard",
+                        ResourceClass = "mediumrc",
+                        ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
+                    }); ;
+
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        CacheState = "Replicated Tables",
+                        ConnectionString = SQL_CONNECTION_LARGE,
+                        DWU = DWUs,
+                        Enabled = false,
+                        Interations = 2,
+                        Mode = SerialOrConcurrentEnum.Concurrent,
+                        OptLevel = "Standard",
+                        ResourceClass = "largerc",
+                        ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
+                    }); ;
+
+                    #endregion // Execution Runs
+
+
+                    // Read all the SQL Statements and do any necessary string replacements on the SQL
+                    foreach (ExecutionRun executionRun in executionRuns)
+                    {
+                        Console.WriteLine("Starting Execution Run: " + executionRun.ScriptPath);
+
+                        if (executionRun.Enabled == false)
                         {
-                            SQLTask sqlTask = new SQLTask();
+                            Console.WriteLine("Skipping Execution Run: " + executionRun.ScriptPath);
+                            continue;
+                        }
 
-                            rawSQL = System.IO.File.ReadAllText(item);
-
-                            fileName = item.Substring(item.LastIndexOf("\\") + 1).Replace(".sql", string.Empty);
-
-                            // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
-                            // OVERRIDES: To handle multiple CTASs (append the loop variable)
-                            // What this will do is find "my_ctas_table" and replace it with "my_ctas_table_1" so if we have 2 loops we will get a _1 and _2 table so we do not have collections
-                            rawSQL = rawSQL.Replace("my_ctas_table", "my_ctas_table_" + i.ToString());
-
-                            sqlTask.ConnectionString = executionRun.ConnectionString;
-                            sqlTask.ScriptName = fileName;
-                            sqlTask.Label = fileName + " :: " + i.ToString() + " :: " + counter.ToString();
-                            sqlTask.SQL = rawSQL;
-
-                            // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
-                            // OVERRIDES: Change certain scripts to run in different classes
-                            if (sqlTask.ScriptName.ToUpper() == "????")
-                            {
-                                // Do whatever you want in here
-                                sqlTask.ConnectionString = SQL_CONNECTION_LARGE;
-                            }
-
-                            sqlScripts.Add(sqlTask);
-                            counter++;
-                        } // foreach
-                    } // i
-
-
-                    if (executionRun.Mode == SerialOrConcurrentEnum.Concurrent)
-                    {
-                        // CONCURRENT 
-                        List<Task<string>> executeSQLTask = new List<Task<string>>();
-                        executeSQLTask.Clear();
+                        // local variables
+                        List<string> sessionIds = new List<string>();
+                        sessionIds.Clear();
+                        List<SQLTask> sqlScripts = new List<SQLTask>();
+                        sqlScripts.Clear();
+                        string rawSQL = null;
+                        string fileName = "";
+                        int counter = 1;
+                        DateTime startDate = DateTime.UtcNow;
+                        DateTime endDate = DateTime.UtcNow;
                         startDate = DateTime.UtcNow;
-                        foreach (SQLTask sqlTask in sqlScripts)
+
+                        // Prepare the scripts for execution
+                        // We want to do a search and replace on certain items since we might need to change table names or resource classes.
+                        for (int i = 1; i <= executionRun.Interations; i++)
                         {
-                            executeSQLTask.Add(Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString)));
-                        }
-
-                        // Wait for everything to finish
-                        await Task.WhenAll(executeSQLTask);
-                        endDate = DateTime.UtcNow;
-
-                        // Copy SessionIds
-                        foreach (var item in executeSQLTask)
-                        {
-                            sessionIds.Add(item.Result);
-                            if (item.Result != null)
+                            foreach (var item in System.IO.Directory.GetFiles(executionRun.ScriptPath))
                             {
-                                Console.WriteLine("DONE: " + (item.Result ?? "NULL"));
-                            }
-                            else
-                            {
-                                Console.WriteLine("*********** ERROR ABORT TEST: SESSION ID IS NULL ***********");
-                                return;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // SERIAL
-                        startDate = DateTime.UtcNow;
-                        foreach (SQLTask sqlTask in sqlScripts)
-                        {
-                            Task<string> serialSQL = Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString));
-                            serialSQL.Wait();
-                            sessionIds.Add(serialSQL.Result);
-                            if (serialSQL.Result != null)
-                            {
-                                Console.WriteLine("DONE: " + (serialSQL.Result ?? "NULL"));
-                            }
-                            else
-                            {
-                                Console.WriteLine("***********ERROR ABORT TEST: SESSION ID IS NULL -- SQL: " + sqlTask.Label + " ***********");
-                                return;
-                            }
-                        }
-                        endDate = DateTime.UtcNow;
-                    } // serialOrConcurrentMode == SerialOrConcurrentEnum.Concurrent
+                                SQLTask sqlTask = new SQLTask();
 
+                                rawSQL = System.IO.File.ReadAllText(item);
 
+                                fileName = item.Substring(item.LastIndexOf("\\") + 1).Replace(".sql", string.Empty);
 
-                    // Save the data to the Automated Test Tables
-                    try
-                    {
-                        using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_SMALL))
-                        {
-                            connection.Open();
+                                // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
+                                // OVERRIDES: To handle multiple CTASs (append the loop variable)
+                                // What this will do is find "my_ctas_table" and replace it with "my_ctas_table_1" so if we have 2 loops we will get a _1 and _2 table so we do not have collections
+                                rawSQL = rawSQL.Replace("my_ctas_table", "my_ctas_table_" + i.ToString());
 
-                            using (SqlCommand command = new SqlCommand("SELECT 1 + ISNULL(MAX(AutomatedTestId), 0) FROM telemetry.AutomatedTest", connection))
-                            {
-                                string AutomatedTestId = command.ExecuteScalar().ToString();
+                                sqlTask.ConnectionString = executionRun.ConnectionString;
+                                sqlTask.ScriptName = fileName;
+                                sqlTask.Label = fileName + " :: " + i.ToString() + " :: " + counter.ToString();
+                                sqlTask.SQL = rawSQL;
 
-                                command.CommandText = "INSERT telemetry.AutomatedTest(AutomatedTestId, Description, Mode, Interations, StartTime, EndTime, DWU, CacheState, OptLevel, ScriptMods, ResourceClass)" +
-                                                      "VALUES(" + AutomatedTestId + ", " +
-                                                      "'Automated Test Run by Synapse Test Runner'," +
-                                                      "'" + executionRun.Mode.ToString() + "'," +
-                                                      "'" + executionRun.Interations.ToString() + "'," +
-                                                      "'" + startDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                                      "'" + endDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                                      "'" + DWUs + "', " +
-                                                      "'" + executionRun.CacheState + "'," +
-                                                      "'" + executionRun.OptLevel + "'," +
-                                                      "'" + executionRun.ScriptPath.Substring(executionRun.ScriptPath.LastIndexOf("\\") + 1) + "','" +
-                                                      executionRun.ResourceClass + "');";
-
-                                command.ExecuteNonQuery();
-
-                                foreach (var sessionId in sessionIds)
+                                // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
+                                // OVERRIDES: Change certain scripts to run in different classes
+                                if (sqlTask.ScriptName.ToUpper() == "????")
                                 {
-                                    command.CommandText = "INSERT INTO telemetry.AutomatedTestSession (AutomatedTestId,session_id) " +
-                                                          "VALUES (" + AutomatedTestId.ToString() + ",'" + sessionId + " ');";
-                                    command.ExecuteNonQuery();
-                                    Console.WriteLine("Saving Data: " + sessionId);
-                                } // sessionId
+                                    // Do whatever you want in here
+                                    sqlTask.ConnectionString = SQL_CONNECTION_LARGE;
+                                }
 
-                                // Capture the exec_requests since we can loose them when the server is paused
-                                command.CommandText = "INSERT INTO [telemetry].[AutomatedTest_exec_requests] " +
-                                                        "([request_id], [session_id], [status], [submit_time], [start_time], [end_compile_time], [end_time], [total_elapsed_time], " +
-                                                        "[label], [error_id], [database_id], [command], [resource_class], [importance], [group_name], [classifier_name], " +
-                                                        "[resource_allocation_percentage], [result_cache_hit]) " +
-                                                      "SELECT [request_id], [session_id], [status], [submit_time], [start_time], [end_compile_time], [end_time], [total_elapsed_time],  " +
-                                                             "[label], [error_id], [database_id], [command], [resource_class], [importance], [group_name], [classifier_name],  " +
-                                                             "[resource_allocation_percentage], [result_cache_hit] " +
-                                                       "FROM sys.dm_pdw_exec_requests " +
-                                                      "WHERE session_id IN     (SELECT session_id FROM [telemetry].[AutomatedTestSession]) " +
-                                                        "AND session_id NOT IN (SELECT session_id FROM [telemetry].[AutomatedTest_exec_requests]);";
+                                sqlScripts.Add(sqlTask);
+                                counter++;
+                            } // foreach
+                        } // i
 
-                                command.ExecuteNonQuery();
-                                Console.WriteLine("Captured sys.dm_pdw_exec_requests");
-                            } // SqlCommand command
+
+                        if (executionRun.Mode == SerialOrConcurrentEnum.Concurrent)
+                        {
+                            // CONCURRENT 
+                            List<Task<string>> executeSQLTask = new List<Task<string>>();
+                            executeSQLTask.Clear();
+                            startDate = DateTime.UtcNow;
+                            foreach (SQLTask sqlTask in sqlScripts)
+                            {
+                                executeSQLTask.Add(Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString)));
+                            }
+
+                            // Wait for everything to finish
+                            await Task.WhenAll(executeSQLTask);
+                            endDate = DateTime.UtcNow;
+
+                            // Copy SessionIds
+                            foreach (var item in executeSQLTask)
+                            {
+                                sessionIds.Add(item.Result);
+                                if (item.Result != null)
+                                {
+                                    Console.WriteLine("DONE: " + (item.Result ?? "NULL"));
+                                }
+                                else
+                                {
+                                    Console.WriteLine("*********** ERROR ABORT TEST: SESSION ID IS NULL ***********");
+                                    return;
+                                }
+                            }
                         }
-                    }
-                    catch (SqlException e)
-                    {
-                        Console.WriteLine("*********** ERROR: " + e.ToString());
-                        Console.ReadKey();
-                    }
+                        else
+                        {
+                            // SERIAL
+                            startDate = DateTime.UtcNow;
+                            foreach (SQLTask sqlTask in sqlScripts)
+                            {
+                                Task<string> serialSQL = Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString));
+                                serialSQL.Wait();
+                                sessionIds.Add(serialSQL.Result);
+                                if (serialSQL.Result != null)
+                                {
+                                    Console.WriteLine("DONE: " + (serialSQL.Result ?? "NULL"));
+                                }
+                                else
+                                {
+                                    Console.WriteLine("***********ERROR ABORT TEST: SESSION ID IS NULL -- SQL: " + sqlTask.Label + " ***********");
+                                    return;
+                                }
+                            }
+                            endDate = DateTime.UtcNow;
+                        } // serialOrConcurrentMode == SerialOrConcurrentEnum.Concurrent
 
-                    Console.WriteLine("Completed Execution Run: " + executionRun.ScriptPath);
 
-                } // foreach Execution run
 
-            } // (string dwuScale in DWUsToTestList)
+                        // Save the data to the Automated Test Tables
+                        try
+                        {
+                            using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_SMALL))
+                            {
+                                connection.Open();
 
+                                using (SqlCommand command = new SqlCommand("SELECT 1 + ISNULL(MAX(AutomatedTestId), 0) FROM telemetry.AutomatedTest", connection))
+                                {
+                                    string AutomatedTestId = command.ExecuteScalar().ToString();
+
+                                    command.CommandText = "INSERT telemetry.AutomatedTest(AutomatedTestId, Description, Mode, Interations, StartTime, EndTime, DWU, CacheState, OptLevel, ScriptMods, ResourceClass)" +
+                                                          "VALUES(" + AutomatedTestId + ", " +
+                                                          "'Automated Test Run by Synapse Test Runner'," +
+                                                          "'" + executionRun.Mode.ToString() + "'," +
+                                                          "'" + executionRun.Interations.ToString() + "'," +
+                                                          "'" + startDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
+                                                          "'" + endDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
+                                                          "'" + DWUs + "', " +
+                                                          "'" + executionRun.CacheState + "'," +
+                                                          "'" + executionRun.OptLevel + "'," +
+                                                          "'" + executionRun.ScriptPath.Substring(executionRun.ScriptPath.LastIndexOf("\\") + 1) + "','" +
+                                                          executionRun.ResourceClass + "');";
+
+                                    command.ExecuteNonQuery();
+
+                                    foreach (var sessionId in sessionIds)
+                                    {
+                                        command.CommandText = "INSERT INTO telemetry.AutomatedTestSession (AutomatedTestId,session_id) " +
+                                                              "VALUES (" + AutomatedTestId.ToString() + ",'" + sessionId + " ');";
+                                        command.ExecuteNonQuery();
+                                        Console.WriteLine("Saving Data: " + sessionId);
+                                    } // sessionId
+
+                                    // Capture the exec_requests since we can loose them when the server is paused
+                                    command.CommandText = "INSERT INTO [telemetry].[AutomatedTest_exec_requests] " +
+                                                            "([request_id], [session_id], [status], [submit_time], [start_time], [end_compile_time], [end_time], [total_elapsed_time], " +
+                                                            "[label], [error_id], [database_id], [command], [resource_class], [importance], [group_name], [classifier_name], " +
+                                                            "[resource_allocation_percentage], [result_cache_hit]) " +
+                                                          "SELECT [request_id], [session_id], [status], [submit_time], [start_time], [end_compile_time], [end_time], [total_elapsed_time],  " +
+                                                                 "[label], [error_id], [database_id], [command], [resource_class], [importance], [group_name], [classifier_name],  " +
+                                                                 "[resource_allocation_percentage], [result_cache_hit] " +
+                                                           "FROM sys.dm_pdw_exec_requests " +
+                                                          "WHERE session_id IN     (SELECT session_id FROM [telemetry].[AutomatedTestSession]) " +
+                                                            "AND session_id NOT IN (SELECT session_id FROM [telemetry].[AutomatedTest_exec_requests]);";
+
+                                    command.ExecuteNonQuery();
+                                    Console.WriteLine("Captured sys.dm_pdw_exec_requests");
+                                } // SqlCommand command
+                            }
+                        }
+                        catch (SqlException e)
+                        {
+                            Console.WriteLine("*********** ERROR: " + e.ToString());
+                            Console.ReadKey();
+                        }
+
+                        Console.WriteLine("Completed Execution Run: " + executionRun.ScriptPath);
+
+                    } // foreach Execution run
+
+                } // (string dwuScale in DWUsToTestList)
+            }
+            catch (Exception mainException)
+            {
+                Console.WriteLine("*********** ERROR: " + mainException.ToString());
+                Console.ReadKey();
+            }
 
             Console.WriteLine("Program Complete!");
         } // Main
@@ -464,28 +471,19 @@ namespace SynapseConcurrency
                            "FROM sys.database_service_objectives " +
                                 "INNER JOIN sys.databases " +
                                         "ON sys.database_service_objectives.database_id = sys.databases.database_id " +
-                                       "AND sys.databases.name = '" + DATEBASE_NAME + "'";
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
-                {
-                    connection.Open();
+                                       "AND sys.databases.name = '" + DATABASE_NAME + "'";
 
-                    using (SqlCommand command = new SqlCommand(sql, connection))
-                    {
-                        command.CommandTimeout = 0;
-                        DWUs = command.ExecuteScalar().ToString();
-                    }
+            using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.CommandTimeout = 0;
+                    DWUs = command.ExecuteScalar().ToString();
                 }
             }
-            catch (SqlException e)
-            {
-                Console.WriteLine("*********** ERROR: " + e.ToString());
-                Console.ReadKey();
-            }
-            finally
-            {
-            }
+
 
             Console.WriteLine("**** Database is running at " + DWUs.ToString() + " DWUs ***");
             return DWUs;
@@ -546,7 +544,7 @@ namespace SynapseConcurrency
         // 
         public static void ScaleDatabase(string DWU)
         {
-            string sqlScale = $"ALTER DATABASE {DATEBASE_NAME} MODIFY(SERVICE_OBJECTIVE = '{DWU}');";
+            string sqlScale = $"ALTER DATABASE {DATABASE_NAME} MODIFY(SERVICE_OBJECTIVE = '{DWU}');";
 
             try
             {
@@ -564,7 +562,7 @@ namespace SynapseConcurrency
                 }
 
                 // We need to give Azure some time to start the scaling process
-                System.Threading.Thread.Sleep(2 * 60 * 1000); // wait 2 minutes seconds
+                System.Threading.Thread.Sleep(1 * 60 * 1000); // wait 1 minute
 
                 while (true)
                 {
@@ -577,15 +575,35 @@ namespace SynapseConcurrency
                         if (currentDWUs == DWU)
                         {
                             Console.WriteLine($"**** Database has Scaled to {currentDWUs} ***");
+                            Console.WriteLine($"**** Testing if Database {DATABASE_NAME} is Ready ***");
+                            while (true)
+                            {
+                                // make sure we can connect to the user's database
+                                try
+                                {
+                                    using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_USER_DATABASE))
+                                    {
+                                        connection.Open();
+
+                                        using (SqlCommand command = new SqlCommand("SEELCT 1", connection))
+                                        {
+                                            Console.WriteLine($"**** User Database {DATABASE_NAME} is Ready ***");
+                                            command.CommandTimeout = 0;
+                                            command.ExecuteNonQuery();
+                                            break;
+                                        }
+                                    }
+                                }
+                                catch
+                                {
+                                    Console.WriteLine($"**** User Database {DATABASE_NAME} is Not Ready... (waiting 30 seconds and testing again) ***");
+                                    System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
+                                }
+                            }
                             break;
                         }
-                        else
-                        {
-                            Console.WriteLine($"**** Database is still Scaling... (waiting 30 seconds and testing again) ***");
-                            System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
-                        }
                     }
-                    catch (Exception innerEx)
+                    catch
                     {
                         Console.WriteLine($"**** Database is still Scaling... (waiting 30 seconds and testing again) ***");
                         System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds

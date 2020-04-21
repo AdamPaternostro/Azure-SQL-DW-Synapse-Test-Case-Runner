@@ -109,7 +109,7 @@ The sample code works against a new data warehouse when you include the Adventur
 - Run the scripts in the SQL Script folder in order 01, 02, etc.
 - Set the following values in the C#
 ```
-        const string DATEBASE_NAME = "REPLACE-ME";
+        const string DATABASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "sqlAdmin";        
         const string PASSWORD = "REPLACE_me_01"; 
@@ -137,7 +137,7 @@ The sample code works against a new data warehouse when you include the Adventur
         - {query-number} - the first query in the file should start with 1, then 2, etc.
 - Open the solution file Synapse-Test-Case-Runner in Visual Studio (you can also use VS Code for this) and update these values
 ```
-        const string DATEBASE_NAME = "REPLACE-ME";
+        const string DATABASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "sqlAdmin";        
         const string PASSWORD = "REPLACE_me_01"; 
