@@ -77,7 +77,7 @@ namespace SynapseConcurrency
                     if (DWUs != dwuScale)
                     {
                         // Is the database at the corect DWUs?  If not then let's scale it
-                        ScaleDatabase(dwuScale);
+                        ScaleDatabase(DWUs, dwuScale);
                         DWUs = GetDWUs();
                     }
 
@@ -104,7 +104,7 @@ namespace SynapseConcurrency
                         ConnectionString = SQL_CONNECTION_SMALL,
                         DWU = DWUs,
                         Enabled = true,
-                        Interations = 1,
+                        Interations = 2,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = "Standard",
                         ResourceClass = "smallrc",
@@ -541,81 +541,101 @@ namespace SynapseConcurrency
         } // ReplicateTables
 
 
-        // 
-        public static void ScaleDatabase(string DWU)
+        static DateTime lastScaleDateTime = DateTime.MinValue;
+
+        public static void ScaleDatabase(string originalDWU, string newDWU)
         {
-            string sqlScale = $"ALTER DATABASE {DATABASE_NAME} MODIFY(SERVICE_OBJECTIVE = '{DWU}');";
+            string sqlScale = $"ALTER DATABASE {DATABASE_NAME} MODIFY(SERVICE_OBJECTIVE = '{newDWU}');";
+            string sqlScaleTest = $"SELECT TOP 1 state_desc " +
+                                     "FROM sys.dm_operation_status " +
+                                    "WHERE resource_type_desc = 'Database' " +
+                                     $"AND major_resource_id = '{DATABASE_NAME}' " +
+                                      "AND operation = 'ALTER DATABASE' " +
+                                 "ORDER BY start_time DESC";
 
             try
             {
-                using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
+                bool scaledDatabase = false;
+                string scaleResult = null;
+
+                // Try 5 times to scale the database
+                // Sometimes we scale so fast it can fail since a scale is in progress
+                for (int i = 1; i <= 5; i++)
                 {
-                    connection.Open();
-
-                    using (SqlCommand command = new SqlCommand(sqlScale, connection))
+                    DateTime now = DateTime.Now;
+                    if (now.Subtract(lastScaleDateTime).Minutes < 5)
                     {
-                        Console.WriteLine($"**** Scaling Database to {DWU} DWUs ***");
-                        command.CommandTimeout = 0;
-                        command.ExecuteNonQuery();
-
+                        int timeToSleep = (5 * 60 * 1000) - (now.Subtract(lastScaleDateTime).Minutes * 60 * 1000);
+                        Console.WriteLine($"**** The database was recently scaled.  Sleeping for {timeToSleep} milliseconds ***");
+                        System.Threading.Thread.Sleep(timeToSleep);
                     }
-                }
 
-                // We need to give Azure some time to start the scaling process
-                System.Threading.Thread.Sleep(1 * 60 * 1000); // wait 1 minute
+                    lastScaleDateTime = DateTime.Now;
 
-                while (true)
-                {
-
-                    try
+                    // Issue the Scale command
+                    using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
                     {
-                        Console.WriteLine("**** Testing if Database has Scaled ***");
-                        string currentDWUs = GetDWUs();
+                        connection.Open();
 
-                        if (currentDWUs == DWU)
+                        using (SqlCommand command = new SqlCommand(sqlScale, connection))
                         {
-                            Console.WriteLine($"**** Database has Scaled to {currentDWUs} ***");
-                            while (true)
-                            {
-                                // make sure we can connect to the user's database
-                                Console.WriteLine($"**** Testing if Database {DATABASE_NAME} is Ready ***");
-                                try
-                                {
-                                    using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_USER_DATABASE))
-                                    {
-                                        connection.Open();
+                            Console.WriteLine($"**** Scaling Database to {newDWU} DWUs ***");
+                            command.CommandTimeout = 0;
+                            command.ExecuteNonQuery();
+                        }
+                    }
 
-                                        using (SqlCommand command = new SqlCommand("SELECT 1", connection))
-                                        {
-                                            command.CommandTimeout = 0;
-                                            command.ExecuteNonQuery();
-                                            Console.WriteLine($"**** User Database {DATABASE_NAME} is Ready ***");
-                                            break;
-                                        }
-                                    }
-                                }
-                                catch (Exception userDatabase)
+                    // We need to give Azure some time to start the scaling process
+                    System.Threading.Thread.Sleep(1 * 60 * 1000); // wait 1 minute
+
+                    while (true)
+                    {
+                        using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
+                        {
+                            connection.Open();
+
+                            using (SqlCommand command = new SqlCommand(sqlScaleTest, connection))
+                            {
+                                command.CommandTimeout = 0;
+                                scaleResult = command.ExecuteScalar().ToString();
+                                if (scaleResult == "IN_PROGRESS")
                                 {
-                                    Console.WriteLine($"**** User Database {DATABASE_NAME} is Not Ready... (waiting 30 seconds and testing again) ***");
+                                    Console.WriteLine($"**** Database Scaling is In Progress... (waiting 30 seconds and testing again) ***");
+                                    System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
+                                }
+                                else if (scaleResult == "FAILED")
+                                {
+                                    Console.WriteLine($"**** Database Scaling FAILED ***");
+                                    break;
+                                }
+                                else if (scaleResult == "COMPLETED")
+                                {
+                                    Console.WriteLine($"**** Database Scaled Successfully from {originalDWU} to {newDWU} * **");
+                                    scaledDatabase = true;
+                                    break;
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"**** Unknown Scale Status (update code for: {scaleResult}... (waiting 30 seconds and testing again) ***");
                                     System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
                                 }
                             }
-                            break;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"**** Database is still Scaling... (waiting 30 seconds and testing again) ***");
-                            System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
                         }
                     }
-                    catch (Exception masterDatabase)
+
+                    if(scaledDatabase == true)
                     {
-                        Console.WriteLine($"**** Database is still Scaling... (waiting 30 seconds and testing again) ***");
-                        System.Threading.Thread.Sleep(30 * 1000); // wait 30 seconds
+                        break;
                     }
+                } // (int i =1; i <= 5; i++)
+
+                if (scaledDatabase == false)
+                {
+                    Console.WriteLine($"**** FAILED to scale the database {originalDWU} to {newDWU} ***");
+                    throw new Exception($"**** FAILED to scale the database {originalDWU} to {newDWU} ***");
                 }
             }
-            catch (SqlException e)
+            catch (Exception e)
             {
                 Console.WriteLine("*********** ERROR: " + e.ToString());
                 Console.ReadKey();
