@@ -8,16 +8,16 @@ GO
 CREATE TABLE [telemetry].[AutomatedTest]
 (
 	[AutomatedTestId] [int] NOT NULL,
-	[Description] [varchar](300) NULL,
-	[Mode] [varchar](100) NULL,
-	[Interations] [varchar](100) NULL,
+	[Description] [varchar](500) NULL,
+	[Mode] [varchar](500) NULL,
+	[Interations] [varchar](500) NULL,
 	[StartTime] [datetime2](7) NOT NULL,
 	[EndTime] [datetime2](7) NULL,
-	[DWU] [varchar](100) NULL,
-	[CacheState] [varchar](50) NOT NULL,
-	[OptLevel] [varchar](50) NOT NULL,
-	[ScriptMods] [varchar](50) NOT NULL,
-	[ResourceClass] [nvarchar](20) NULL
+	[DWU] [varchar](500) NULL,
+	[CacheState] [varchar](500) NOT NULL,
+	[OptLevel] [varchar](500) NOT NULL,
+	[ScriptMods] [varchar](500) NOT NULL,
+	[ResourceClass] [nvarchar](500) NULL
 )
 WITH
 (

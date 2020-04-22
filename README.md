@@ -124,7 +124,7 @@ The sample code works against a new data warehouse when you include the Adventur
 - Create your database in Azure
 - Execute the scripts in the SQL Scripts folder to setup the telemetry capture tables
 - Load your database with data
-- Update statistics on your tables
+- Update statistics on your tables.  Run the stored procedure: [dbo].[GenerateCreateStatisticsCommands] to generate the commands to run
 - Write your queries and ensure they are working
 - Place your SQL statements in the Sample-Serial-SQL-v1 or Sample-Concurrency-SQL-v1 (you can create as many folders are you like)
    - NOTE: You need to name your queries files {xx}-{yourname}.sql.  
@@ -165,8 +165,21 @@ The sample code works against a new data warehouse when you include the Adventur
 - Pause the database
 
 
+### While the code is executing
+- You should not be in the database doing any work
+- If you think the database is not scaling you can check by running this command
+```
+ SELECT *
+   FROM sys.dm_operation_status
+  WHERE resource_type_desc = 'Database'
+    AND major_resource_id = 'REPLACE-ME-WITH-YOUR-DATABASE-NAME'
+    AND operation = 'ALTER DATABASE'
+  ORDER BY start_time DESC  
+```
+
 ## Enhancements to the .NET Core code
-- Add test case to verify if query ran correctly
 - Add a PowerBI report
-- Call the replication tables programatically and wait until their status is Ready.
+- Add test case to verify if query ran correctly
+- Test if resultset caching is on and set the OptLevel attribute
 - Turn on result set caching programmatically based upon the run
+- Test if the table statistics are up to date and pause the program in the beginning if not

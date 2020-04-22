@@ -30,9 +30,12 @@ namespace SynapseConcurrency
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "REPLACE-ME";
         // Assumes all your passwords for all users are the same (if not change the connection string below)
-        const string PASSWORD = "REPLACE_me_01"; 
+        const string PASSWORD = "REPLACE_me_01";
         // Which DWUs do you want to run this test at. You can just do one.
-        static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c" }; 
+        // "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c", "DW1500c", "DW2000c", "DW2500c", 
+        // "DW3000c", "DW5000c", "DW6000c", "DW7500c", "DW10000c", "DW15000c", "DW30000c"
+        static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c" };
+
 
 
 
@@ -65,6 +68,10 @@ namespace SynapseConcurrency
         {
             try
             {
+                string minStatisticDate = GetMinStatisticDate();
+                bool resultSetCachingStatus = GetResultSetCachingStatus();
+                string optomizationLevel = $"minStatisticDate:{minStatisticDate},resultSetCachingStatus:{resultSetCachingStatus}";
+
                 foreach (string dwuScale in DWUsToTestList)
                 {
 
@@ -103,7 +110,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "smallrc",
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
                     }); ;
@@ -116,7 +123,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
                     }); ;
@@ -129,7 +136,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
                     }); ;
@@ -144,7 +151,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "smallrc",
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
                     }); ;
@@ -157,7 +164,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
                     }); ;
@@ -170,7 +177,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
                     }); ;
@@ -189,7 +196,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
                     }); ;
@@ -202,7 +209,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
                     }); ;
@@ -217,7 +224,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
                     }); ;
@@ -230,7 +237,7 @@ namespace SynapseConcurrency
                         Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
-                        OptLevel = "Standard",
+                        OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
                     }); ;
@@ -487,6 +494,84 @@ namespace SynapseConcurrency
         } // GetDWUs
 
 
+        /// <summary>
+        /// Gets the min statistics rebuild date.  This does not mean all your tables are out of date, but if you have a old date or null 
+        /// you should create or rebuild your statistics.
+        /// </summary>
+        /// <returns></returns>
+        public static string GetMinStatisticDate()
+        {
+            string minStatisticDate = null;
+            string sql = "SELECT MIN(STATS_DATE(st.[object_id],st.[stats_id])) AS MinStatisticDate " +
+                           "FROM sys.objects ob " +
+                                "INNER JOIN sys.stats st " +
+                                        "ON ob.[object_id] = st.[object_id] " +
+                                "INNER JOIN sys.stats_columns sc " +
+                                        "ON  st.[stats_id] = sc.[stats_id] " +
+                                       "AND st.[object_id] = sc.[object_id] " +
+                                "INNER JOIN sys.columns co " +
+                                        "ON sc.[column_id] = co.[column_id] " +
+                                       "AND sc.[object_id] = co.[object_id] " +
+                                "INNER JOIN sys.types ty " +
+                                        "ON co.[user_type_id] = ty.[user_type_id] " +
+                                "INNER JOIN sys.tables tb " +
+                                        "ON co.[object_id] = tb.[object_id] " +
+                                "INNER JOIN sys.schemas sm " +
+                                        "ON tb.[schema_id] = sm.[schema_id] " +
+                         "WHERE st.[user_created] = 1;";
+
+            using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_USER_DATABASE))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.CommandTimeout = 0;
+                    minStatisticDate = command.ExecuteScalar().ToString();
+                }
+            }
+
+
+            Console.WriteLine($"**** Database MinStatisticDate = {minStatisticDate} ****");
+            return minStatisticDate;
+        } // GetMinStatisticDate
+
+
+        /// <summary>
+        /// Returns if resultset caching is on
+        /// </summary>
+        /// <returns></returns>
+        public static bool GetResultSetCachingStatus()
+        {
+            string isResultSetCachingOn = null;
+            string sql = "SELECT is_result_set_caching_on " +
+                           "FROM sys.databases " +
+                          $"WHERE name = '{DATABASE_NAME}'; ";
+
+            using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.CommandTimeout = 0;
+                    isResultSetCachingOn = command.ExecuteScalar().ToString();
+                }
+            }
+
+
+            Console.WriteLine($"**** Database isResultSetCachingOn = {isResultSetCachingOn} ****");
+            if (isResultSetCachingOn.ToLower() == "true" || isResultSetCachingOn == "1")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        } // GetResultSetCachingStatus
+
+
         public static void ReplicateTables()
         {
             string sqlReplicate = "[dbo].[ReplicateTables]";
@@ -612,7 +697,7 @@ namespace SynapseConcurrency
                         }
                     }
 
-                    if(scaledDatabase == true)
+                    if (scaledDatabase == true)
                     {
                         break;
                     }
