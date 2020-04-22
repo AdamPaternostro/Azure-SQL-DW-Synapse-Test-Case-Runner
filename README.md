@@ -1,8 +1,22 @@
-# Azure-SQL-DW-Synapse-Test-Case-Runner
-The below will help you perform a data warehouse test on SQL DW / Synapse and help you understand how to compare the results to other vendors. Included is actual code that will run the tests by automatically scaling your database to desired level, executing serial query performance testing, executing concurrent query testing and ensuring items like replicated tables are replicated before starting a run.  All the telemetry is saved so you can see the results.
+# Azure SQL DW / Synapse Query Execution Tool
+The below will help you quickly perform a data warehouse test on SQL DW / Synapse and help you execute a set of queries allowing you to right size your system or compare their execution to another vendor.
 
-Just want to run the code? Jump down to the code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Case-Runner#running-against-adventureworks-sample-database
-The sample code works against a new data warehouse when you include the AdventureWorks sample database. 
+- The code will:
+    - Run a set of queries against SQL DW / Synapse
+    - Run a set of queries in different resource classes
+    - Run a set of queries in serial and/or concurrently
+    - Scale the SQL DW / Synapse warehouse to different sizes
+    - Ensure that your replicated tables are replicated before the queries test begins
+    - Save all the timings to a set of tables that will include compile time, queue time, execution time and log various configurations about the sytem
+
+- Benefits
+    - You will be able to right size your database for optimal cost and concurrency demand
+    - This will save you lots of time by allowing you to run many permutations of your tests
+    - Provides stored procedures that implement best practices
+ 
+
+QuickStart Code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Case-Runner#running-against-adventureworks-sample-database
+
 
 ## How to run a SQL DW / Synapse test
 
