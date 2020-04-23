@@ -26,7 +26,6 @@ namespace SynapseConcurrency
 
 
         // **** CHANGE ME ****
-
         const string DATABASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "REPLACE-ME";
@@ -121,7 +120,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
@@ -135,7 +134,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
@@ -151,7 +150,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_SMALL,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
@@ -165,7 +164,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
@@ -179,7 +178,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
@@ -199,7 +198,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
@@ -213,7 +212,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
@@ -229,7 +228,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
@@ -243,7 +242,7 @@ namespace SynapseConcurrency
                         ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,,
+                        Enabled = true,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
