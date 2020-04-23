@@ -5,9 +5,9 @@ The below will help you quickly perform a data warehouse test on SQL DW / Synaps
     - Run a set of queries against SQL DW / Synapse
     - Run a set of queries in different resource classes
     - Run a set of queries in serial and/or concurrently
-    - Scale the SQL DW / Synapse warehouse to different sizes
-    - Ensure that your replicated tables are replicated before the queries test begins
-    - Turn on or off resultset caching
+    - Automatically scale the SQL DW / Synapse warehouse to different sizes
+    - Automatically replicate any replicated tables and pause for their replication status to be ready
+    - Automatically turn on or off resultset caching
     - Save all the timings to a set of tables that will include compile time, queue time, execution time and log various configurations about the sytem
 
 - Benefits
@@ -131,7 +131,7 @@ QuickStart Code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Ca
 ```
 - Run the C# code
 - Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL] to see the telemetry of your runs
-- Open the Power BI report (refresh the data) and explore the data (PowerBI coming soon)
+- Open the Power BI report (refresh the data) and explore the data
 - Pause the database
 
 
@@ -176,7 +176,7 @@ QuickStart Code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Ca
 - Run the stored procedure ReplicateTablesStatus (wait until they are all in a "Ready" state)
 - Run the test!  (Consider your first run a test so don't go too big)
 - Run the stored procedure [telemetry].[AutomatedTestStatistics_ALL] to see the telemetry of your runs
-- Open the Power BI report (refresh the data) and explore the data (PowerBI coming soon)
+- Open the Power BI report (refresh the data) and explore the data
 - Pause the database
 
 
@@ -193,8 +193,4 @@ QuickStart Code: https://github.com/AdamPaternostro/Azure-SQL-DW-Synapse-Test-Ca
 ```
 
 ## Enhancements to the .NET Core code
-- Add a PowerBI report
 - Add test case to verify if query ran correctly
-- Test if resultset caching is on and set the OptLevel attribute
-- Turn on result set caching programmatically based upon the run
-- Test if the table statistics are up to date and pause the program in the beginning if not
