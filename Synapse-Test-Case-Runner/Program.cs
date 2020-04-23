@@ -26,6 +26,7 @@ namespace SynapseConcurrency
 
 
         // **** CHANGE ME ****
+
         const string DATABASE_NAME = "REPLACE-ME";
         const string SERVER_NAME = "REPLACE-ME";
         const string SQL_ADMIN_NAME = "REPLACE-ME";
@@ -68,10 +69,9 @@ namespace SynapseConcurrency
         {
             try
             {
-                string minStatisticDate = GetMinStatisticDate();
-                bool resultSetCachingStatus = GetResultSetCachingStatus();
-                string optomizationLevel = $"minStatisticDate:{minStatisticDate},resultSetCachingStatus:{resultSetCachingStatus}";
-
+                DateTime minStatisticDate = GetMinStatisticDate();
+                string optomizationLevel = "(none)";
+                                
                 foreach (string dwuScale in DWUsToTestList)
                 {
 
@@ -104,7 +104,7 @@ namespace SynapseConcurrency
                     // Run Serial V1 on small, medium and large resource classes
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_SMALL,
                         DWU = DWUs,
                         Enabled = true,
@@ -112,75 +112,81 @@ namespace SynapseConcurrency
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
                         ResourceClass = "smallrc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
-                    }); ;
+                    }); 
 
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
-                    }); ;
+                    }); 
 
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v1"
-                    }); ;
+                    }); 
 
 
                     // Run Serial V2 on medium and large resource classes
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_SMALL,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
                         ResourceClass = "smallrc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
-                    }); ;
+                    }); 
 
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
-                    }); ;
+                    }); 
 
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 5,
                         Mode = SerialOrConcurrentEnum.Serial,
                         OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Serial-SQL-v2"
-                    }); ;
+                    }); 
 
 
                     //////////////////////////////////////////////////////////////////
@@ -190,58 +196,78 @@ namespace SynapseConcurrency
                     // Run Concurrency V1 on medium and large resource classes
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
-                        ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
-                    }); ;
+                        ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1",
+                        ResultSetCaching = false,
+                    }); 
 
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
-                    }); ;
+                    }); 
 
 
                     // Run Concurrency V2 on medium and large resource classes
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_MEDIUM,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
                         ResourceClass = "mediumrc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
-                    }); ;
+                    }); 
 
                     executionRuns.Add(new ExecutionRun()
                     {
-                        CacheState = "Replicated Tables",
+                        ReplicatedTables = true,
                         ConnectionString = SQL_CONNECTION_LARGE,
                         DWU = DWUs,
-                        Enabled = true,
+                        Enabled = true,,
                         Interations = 2,
                         Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
                         ResourceClass = "largerc",
+                        ResultSetCaching = false,
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v2"
-                    }); ;
+                    });
 
+                    //////////////////////////////////////////////////////////////////
+                    // Concurrency WITH ResultSetCaching
+                    //////////////////////////////////////////////////////////////////
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        ReplicatedTables = true,
+                        ConnectionString = SQL_CONNECTION_SMALL,
+                        DWU = DWUs,
+                        Enabled = true,
+                        Interations = 4,
+                        Mode = SerialOrConcurrentEnum.Concurrent,
+                        OptLevel = optomizationLevel,
+                        ResourceClass = "smallrc",
+                        ResultSetCaching = true,
+                        ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
+                    });
                     #endregion // Execution Runs
 
 
@@ -256,6 +282,12 @@ namespace SynapseConcurrency
                             continue;
                         }
 
+                        bool resultSetCachingStatus = GetResultSetCachingStatus();
+                        if (resultSetCachingStatus != executionRun.ResultSetCaching)
+                        {
+                            SetResultSetCachingStatus(executionRun.ResultSetCaching);
+                        }
+                        
                         // local variables
                         List<string> sessionIds = new List<string>();
                         sessionIds.Clear();
@@ -369,18 +401,31 @@ namespace SynapseConcurrency
                                 {
                                     string AutomatedTestId = command.ExecuteScalar().ToString();
 
-                                    command.CommandText = "INSERT telemetry.AutomatedTest(AutomatedTestId, Description, Mode, Interations, StartTime, EndTime, DWU, CacheState, OptLevel, ScriptMods, ResourceClass)" +
-                                                          "VALUES(" + AutomatedTestId + ", " +
-                                                          "'Automated Test Run by Synapse Test Runner'," +
-                                                          "'" + executionRun.Mode.ToString() + "'," +
-                                                          "'" + executionRun.Interations.ToString() + "'," +
-                                                          "'" + startDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                                          "'" + endDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                                          "'" + DWUs + "', " +
-                                                          "'" + executionRun.CacheState + "'," +
-                                                          "'" + executionRun.OptLevel + "'," +
-                                                          "'" + executionRun.ScriptPath.Substring(executionRun.ScriptPath.LastIndexOf("\\") + 1) + "','" +
-                                                          executionRun.ResourceClass + "');";
+                                    command.CommandText = "INSERT telemetry.AutomatedTest(" +
+                                                                "[AutomatedTestId]," +
+                                                                "[ScriptMods]," +
+                                                                "[Mode]," +
+                                                                "[DWU]," +
+                                                                "[ReplicatedTables]," +
+                                                                "[Interations]," +
+                                                                "[MinStatisticDate]," +
+                                                                "[ResultSetCaching]," +
+                                                                "[ResourceClass]," +
+                                                                "[OptLevel]," +
+                                                                "[StartTime]," +
+                                                                "[EndTime]) VALUES (" +
+                                                                AutomatedTestId.ToString() + "," +
+                                                                "'" + executionRun.ScriptPath.Substring(executionRun.ScriptPath.LastIndexOf("\\") + 1) + "'," +
+                                                                "'" + executionRun.Mode.ToString() + "'," +
+                                                                "'" + DWUs + "', " +
+                                                                (executionRun.ReplicatedTables ? "1" : "0") + "," +
+                                                                executionRun.Interations.ToString() + "," +
+                                                                "'" + minStatisticDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
+                                                                (executionRun.ResultSetCaching ? "1" : "0") + "," +
+                                                                "'" + executionRun.ResourceClass + "'," +
+                                                                "'" + executionRun.OptLevel + "'," +
+                                                                "'" + startDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
+                                                                "'" + endDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "');";
 
                                     command.ExecuteNonQuery();
 
@@ -499,9 +544,9 @@ namespace SynapseConcurrency
         /// you should create or rebuild your statistics.
         /// </summary>
         /// <returns></returns>
-        public static string GetMinStatisticDate()
+        public static DateTime GetMinStatisticDate()
         {
-            string minStatisticDate = null;
+            DateTime minStatisticDate = DateTime.Parse("01/01/1900");
             string sql = "SELECT MIN(STATS_DATE(st.[object_id],st.[stats_id])) AS MinStatisticDate " +
                            "FROM sys.objects ob " +
                                 "INNER JOIN sys.stats st " +
@@ -527,7 +572,7 @@ namespace SynapseConcurrency
                 using (SqlCommand command = new SqlCommand(sql, connection))
                 {
                     command.CommandTimeout = 0;
-                    minStatisticDate = command.ExecuteScalar().ToString();
+                    minStatisticDate = DateTime.Parse(command.ExecuteScalar().ToString());
                 }
             }
 
@@ -570,6 +615,30 @@ namespace SynapseConcurrency
                 return false;
             }
         } // GetResultSetCachingStatus
+
+
+        /// <summary>
+        /// Returns if resultset caching is on
+        /// </summary>
+        /// <returns></returns>
+        public static void SetResultSetCachingStatus(bool setOn)
+        {
+            string onOrOff = (setOn == true ? "ON" : "OFF");
+            string sql = $"ALTER DATABASE {DATABASE_NAME} SET RESULT_SET_CACHING {onOrOff}";
+
+            Console.WriteLine($"**** Setting RESULT_SET_CACHING {onOrOff} ***");
+
+            using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_MASTER_DATABASE))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.CommandTimeout = 0;
+                    command.ExecuteNonQuery(); 
+                }
+            }
+        } // SetResultSetCachingStatus
 
 
         public static void ReplicateTables()
@@ -734,8 +803,8 @@ namespace SynapseConcurrency
 
         public struct ExecutionRun
         {
-            // How many times to run the scripts (in serial mode this is looped one by one and in concurrency mode, this is ALL scripts at once)
-            public int Interations { get; set; }
+            // Paths to the scripts (if you want the scripts to run in a certain order then name them 01-script1.sql, 02-script2.sql, etc...)
+            public string ScriptPath { get; set; }
 
             // How to run the scripts
             public SerialOrConcurrentEnum Mode { get; set; }
@@ -744,16 +813,20 @@ namespace SynapseConcurrency
             public string DWU { get; set; }
 
             // Did we warm anything up or turn on result set caching
-            public string CacheState { get; set; }
+            public bool ReplicatedTables { get; set; }
+
+            // How many times to run the scripts (in serial mode this is looped one by one and in concurrency mode, this is ALL scripts at once)
+            public int Interations { get; set; }
+
+            // What type of optomizations to the scripts or servers (materizied views or such) - this is user defined
+            public bool ResultSetCaching { get; set; }
+
+            // What resource class are we running the database connection
+            public string ResourceClass { get; set; }
 
             // What type of optomizations to the scripts or servers (materizied views or such) - this is user defined
             public string OptLevel { get; set; }
 
-            // Paths to the scripts (if you want the scripts to run in a certain order then name them 01-script1.sql, 02-script2.sql, etc...)
-            public string ScriptPath { get; set; }
-
-            // What resource class are we running the database connection
-            public string ResourceClass { get; set; }
 
             // The Synapse connection string
             public string ConnectionString { get; set; }

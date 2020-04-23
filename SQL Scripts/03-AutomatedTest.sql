@@ -8,16 +8,17 @@ GO
 CREATE TABLE [telemetry].[AutomatedTest]
 (
 	[AutomatedTestId] [int] NOT NULL,
-	[Description] [varchar](500) NULL,
-	[Mode] [varchar](500) NULL,
-	[Interations] [varchar](500) NULL,
-	[StartTime] [datetime2](7) NOT NULL,
-	[EndTime] [datetime2](7) NULL,
-	[DWU] [varchar](500) NULL,
-	[CacheState] [varchar](500) NOT NULL,
-	[OptLevel] [varchar](500) NOT NULL,
 	[ScriptMods] [varchar](500) NOT NULL,
-	[ResourceClass] [nvarchar](500) NULL
+	[Mode] [varchar](500) NULL,
+	[DWU] [varchar](500) NULL,
+	[ReplicatedTables] [bit] NULL,
+	[Interations] [int] NULL,
+	[MinStatisticDate] [datetime2](7) NOT NULL,
+	[ResultSetCaching] [bit] NOT NULL,
+	[ResourceClass] [nvarchar](500) NULL,
+	[OptLevel] [varchar](500) NOT NULL,
+	[StartTime] [datetime2](7) NOT NULL,
+	[EndTime] [datetime2](7) NULL
 )
 WITH
 (

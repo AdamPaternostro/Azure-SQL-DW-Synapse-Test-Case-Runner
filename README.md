@@ -7,6 +7,7 @@ The below will help you quickly perform a data warehouse test on SQL DW / Synaps
     - Run a set of queries in serial and/or concurrently
     - Scale the SQL DW / Synapse warehouse to different sizes
     - Ensure that your replicated tables are replicated before the queries test begins
+    - Turn on or off resultset caching
     - Save all the timings to a set of tables that will include compile time, queue time, execution time and log various configurations about the sytem
 
 - Benefits
