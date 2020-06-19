@@ -26,26 +26,27 @@ namespace SynapseConcurrency
 
 
         // **** CHANGE ME ****
-        const string DATABASE_NAME = "REPLACE-ME";
-        const string SERVER_NAME = "REPLACE-ME";
-        const string SQL_ADMIN_NAME = "REPLACE-ME";
+        const string DATABASE_NAME = "ART-DEMO-01";
+        const string SERVER_NAME = "artcentralsql";
+        const string SQL_ADMIN_NAME = "SmallCaseDriver";
         // Assumes all your passwords for all users are the same (if not change the connection string below)
-        const string PASSWORD = "REPLACE_me_01";
+        const string PASSWORD = "ScrtPsswrd10!";
         // Which DWUs do you want to run this test at. You can just do one.
         // "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c", "DW1500c", "DW2000c", "DW2500c", 
         // "DW3000c", "DW5000c", "DW6000c", "DW7500c", "DW10000c", "DW15000c", "DW30000c"
-        static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c" };
+        //static List<string> DWUsToTestList = new List<string>() { "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c" };
+        static List<string> DWUsToTestList = new List<string>() { "DW400c" };
 
 
 
 
         // A Global connection string for which has access to the Master Database so we can query the DWUs
         const string SQL_CONNECTION_MASTER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=master;Persist Security Info=False;" +
-            "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
+            "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=20;";
 
         // A Global connection string for which has access to the User Database so we can run some SQL
         const string SQL_CONNECTION_USER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + ";Persist Security Info=False;" +
-            "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;";
+            "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=20;";
 
         // A connection string for each resource class you are testing
         const string SQL_CONNECTION_SMALL = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + "; Persist Security Info=False;" +
@@ -66,37 +67,46 @@ namespace SynapseConcurrency
         /// </summary>
         static async Task Main(string[] args)
         {
+
+            //TelemetrySqlHelper.TestMe("Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=ScrtPsswrd10!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            //return;
+            //This constant is for temporary use
+            const int TMP_WORKLOAD_ID = 2; //Desginates a set of test cases in the telemetry tables for which there exists reporting metadata. Would need to come from somewhere above.
+            const string TMP_CONN_STRING = "Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=ScrtPsswrd10!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+            string DWUs = "DW400c";
+
             try
             {
-                DateTime minStatisticDate = GetMinStatisticDate();
+                //DateTime minStatisticDate = GetMinStatisticDate();
                 string optomizationLevel = "(none)";
-                                
                 foreach (string dwuScale in DWUsToTestList)
                 {
+                    /*                
 
-                    // Get the number of DWUs SQL DW is running
-                    string DWUs = GetDWUs();
+                        // Get the number of DWUs SQL DW is running
+                        string DWUs = GetDWUs();
 
-                    if (DWUs != dwuScale)
-                    {
-                        // Is the database at the corect DWUs?  If not then let's scale it
-                        ScaleDatabase(DWUs, dwuScale);
-                        DWUs = GetDWUs();
-                    }
+                        if (DWUs != dwuScale)
+                        {
+                            // Is the database at the corect DWUs?  If not then let's scale it
+                            ScaleDatabase(DWUs, dwuScale);
+                            DWUs = GetDWUs();
+                        }
 
 
-                    // Replicate all the tables marked for replication and wait until they are all replicated.  
-                    // If you need to alter the stored procedures to adjust which tables to test (e.g. WHERE table_name IS NOT IN ('skip-me-table')
-                    ReplicateTables();
-
+                        // Replicate all the tables marked for replication and wait until they are all replicated.  
+                        // If you need to alter the stored procedures to adjust which tables to test (e.g. WHERE table_name IS NOT IN ('skip-me-table')
+                        ReplicateTables();
+                    */
                     // Configuration Runs (these will all run in a loop)
                     List<ExecutionRun> executionRuns = new List<ExecutionRun>();
                     executionRuns.Clear();
+                    
 
                     // **** CHANGE ME ****  
                     // Create your execution runs
                     #region Execution Runs
-
+                    /*
                     //////////////////////////////////////////////////////////////////
                     // Serial
                     //////////////////////////////////////////////////////////////////
@@ -267,7 +277,26 @@ namespace SynapseConcurrency
                         ResultSetCaching = true,
                         ScriptPath = @"..\..\..\..\Sample-Concurrency-SQL-v1"
                     });
+                    */
+
                     #endregion // Execution Runs
+
+
+
+                    executionRuns.Add(new ExecutionRun()
+                    {
+                        ReplicatedTables = true,
+                        ConnectionString = TMP_CONN_STRING,
+                        DWU = DWUs,
+                        Enabled = true,
+                        Interations = 1,
+                        Mode = SerialOrConcurrentEnum.Serial,
+                        OptLevel = optomizationLevel,
+                        ResourceClass = "smallrc",
+                        ResultSetCaching = false,
+                        ScriptPath = @"C:\faketestcases",
+                        StepsFrom = TestPassSource.ReadFromTelemetryDb
+                    });
 
 
                     // Read all the SQL Statements and do any necessary string replacements on the SQL
@@ -281,11 +310,11 @@ namespace SynapseConcurrency
                             continue;
                         }
 
-                        bool resultSetCachingStatus = GetResultSetCachingStatus();
-                        if (resultSetCachingStatus != executionRun.ResultSetCaching)
-                        {
-                            SetResultSetCachingStatus(executionRun.ResultSetCaching);
-                        }
+                        //bool resultSetCachingStatus = GetResultSetCachingStatus();
+                        //if (resultSetCachingStatus != executionRun.ResultSetCaching)
+                        //{
+                        //    SetResultSetCachingStatus(executionRun.ResultSetCaching);
+                        //}
                         
                         // local variables
                         List<string> sessionIds = new List<string>();
@@ -303,47 +332,57 @@ namespace SynapseConcurrency
                         // We want to do a search and replace on certain items since we might need to change table names or resource classes.
                         for (int i = 1; i <= executionRun.Interations; i++)
                         {
-                            foreach (var item in System.IO.Directory.GetFiles(executionRun.ScriptPath))
+                            if (executionRun.StepsFrom == TestPassSource.ReadFromFolder)
                             {
-                                SQLTask sqlTask = new SQLTask();
-
-                                rawSQL = System.IO.File.ReadAllText(item);
-
-                                fileName = item.Substring(item.LastIndexOf("\\") + 1).Replace(".sql", string.Empty);
-
-                                // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
-                                // OVERRIDES: To handle multiple CTASs (append the loop variable)
-                                // What this will do is find "my_ctas_table" and replace it with "my_ctas_table_1" so if we have 2 loops we will get a _1 and _2 table so we do not have collections
-                                rawSQL = rawSQL.Replace("my_ctas_table", "my_ctas_table_" + i.ToString());
-
-                                sqlTask.ConnectionString = executionRun.ConnectionString;
-                                sqlTask.ScriptName = fileName;
-                                sqlTask.Label = fileName + " :: " + i.ToString() + " :: " + counter.ToString();
-                                sqlTask.SQL = rawSQL;
-
-                                // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
-                                // OVERRIDES: Change certain scripts to run in different classes
-                                if (sqlTask.ScriptName.ToUpper() == "????")
+                                foreach (var item in System.IO.Directory.GetFiles(executionRun.ScriptPath))
                                 {
-                                    // Do whatever you want in here
-                                    sqlTask.ConnectionString = SQL_CONNECTION_LARGE;
-                                }
+                                    SQLTask sqlTask = new SQLTask();
 
-                                sqlScripts.Add(sqlTask);
-                                counter++;
-                            } // foreach
+                                    rawSQL = System.IO.File.ReadAllText(item);
+
+                                    fileName = item.Substring(item.LastIndexOf("\\") + 1).Replace(".sql", string.Empty);
+
+                                    // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
+                                    // OVERRIDES: To handle multiple CTASs (append the loop variable)
+                                    // What this will do is find "my_ctas_table" and replace it with "my_ctas_table_1" so if we have 2 loops we will get a _1 and _2 table so we do not have collections
+                                    rawSQL = rawSQL.Replace("my_ctas_table", "my_ctas_table_" + i.ToString());
+
+                                    sqlTask.ConnectionString = executionRun.ConnectionString;
+                                    sqlTask.ScriptName = fileName;
+                                    sqlTask.Label = fileName + " :: " + i.ToString() + " :: " + counter.ToString();
+                                    sqlTask.SQL = rawSQL;
+
+                                    // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
+                                    // OVERRIDES: Change certain scripts to run in different classes
+                                    if (sqlTask.ScriptName.ToUpper() == "????")
+                                    {
+                                        // Do whatever you want in here
+                                        sqlTask.ConnectionString = SQL_CONNECTION_LARGE;
+                                    }
+
+                                    sqlScripts.Add(sqlTask);
+                                    counter++;
+                                } // foreach
+                            }
+                            else
+                            {
+                                sqlScripts.AddRange(TelemetrySqlHelper.GetTestCases(TMP_CONN_STRING, TMP_WORKLOAD_ID, executionRun.ScriptPath));
+                            }
                         } // i
 
+
+                        int testPassId = TelemetrySqlHelper.LogTestPassStart(TMP_CONN_STRING, TMP_WORKLOAD_ID, executionRun.DWU, "Unknown", executionRun.OptLevel, "Unknown", executionRun.ResourceClass, executionRun.Mode);
 
                         if (executionRun.Mode == SerialOrConcurrentEnum.Concurrent)
                         {
                             // CONCURRENT 
                             List<Task<string>> executeSQLTask = new List<Task<string>>();
                             executeSQLTask.Clear();
+
                             startDate = DateTime.UtcNow;
                             foreach (SQLTask sqlTask in sqlScripts)
                             {
-                                executeSQLTask.Add(Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString)));
+                                executeSQLTask.Add(Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString, sqlTask.TestCaseNum)));
                             }
 
                             // Wait for everything to finish
@@ -371,7 +410,7 @@ namespace SynapseConcurrency
                             startDate = DateTime.UtcNow;
                             foreach (SQLTask sqlTask in sqlScripts)
                             {
-                                Task<string> serialSQL = Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString));
+                                Task<string> serialSQL = Task<string>.Run(() => ExecuteSQL(sqlTask.Label, sqlTask.SQL, sqlTask.ConnectionString, sqlTask.TestCaseNum));
                                 serialSQL.Wait();
                                 sessionIds.Add(serialSQL.Result);
                                 if (serialSQL.Result != null)
@@ -387,8 +426,9 @@ namespace SynapseConcurrency
                             endDate = DateTime.UtcNow;
                         } // serialOrConcurrentMode == SerialOrConcurrentEnum.Concurrent
 
+                        TelemetrySqlHelper.LogTestPassEnd(TMP_CONN_STRING);
 
-
+                        /*
                         // Save the data to the Automated Test Tables
                         try
                         {
@@ -453,11 +493,13 @@ namespace SynapseConcurrency
                                 } // SqlCommand command
                             }
                         }
+                        
                         catch (SqlException e)
                         {
                             Console.WriteLine("*********** ERROR: " + e.ToString());
                             Console.ReadKey();
                         }
+                        */
 
                         Console.WriteLine("Completed Execution Run: " + executionRun.ScriptPath);
 
@@ -479,32 +521,45 @@ namespace SynapseConcurrency
         /// <summary>
         /// Runs a dynamic SQL Statement and returned the Synapse session id for tracking the timings.
         /// </summary>
-        private static string ExecuteSQL(string label, string sql, string connectionString)
+        private static string ExecuteSQL(string label, string sql, string connectionString, int testCaseNum)
         {
+            TelemetrySqlHelper telemetryHelper = new TelemetrySqlHelper();
+            string testRunId = null;
+
             Console.WriteLine("BEGIN: " + label);
             string sessionId = null;
+            SqlConnection connection = new SqlConnection(connectionString);
+            
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
+                //using (SqlConnection connection = new SqlConnection(connectionString))
+                //{
                     connection.Open();
+                    testRunId = telemetryHelper.LogTestRunStart(connection, testCaseNum);
 
                     using (SqlCommand command = new SqlCommand(sql, connection))
                     {
+
                         command.CommandTimeout = 0;
                         command.ExecuteNonQuery();
-                        command.CommandText = "SELECT session_id()";
-                        sessionId = command.ExecuteScalar().ToString();
+                        //command.CommandText = "SELECT session_id()";
+                        //sessionId = command.ExecuteScalar().ToString();
+
+                        sessionId = telemetryHelper.LogTestRunEnd(connection, testRunId, null);
                     }
-                }
+                //}
             }
             catch (SqlException e)
             {
+                sessionId = telemetryHelper.LogTestRunEnd(connection, testRunId, e);
+
                 Console.WriteLine("*********** ERROR: " + e.ToString());
-                Console.ReadKey();
+                Console.ReadKey();  // <-- is this a good idea during concurrent tests? -ATR
             }
             finally
             {
+                connection.Close();
+                connection.Dispose();
                 Console.WriteLine("END:   " + label + " -> SESSION: " + label + " - " + (sessionId ?? "NULL"));
             }
 
@@ -788,22 +843,13 @@ namespace SynapseConcurrency
         } // ScaleDatabase
 
 
-        // Do you want to run in parallel or serial
-        public enum SerialOrConcurrentEnum { Serial, Concurrent }
-
-        public struct SQLTask
-        {
-            public string ScriptName { get; set; }
-            public string ConnectionString { get; set; }
-            public string Label { get; set; }
-            public string SQL { get; set; }
-        } // SQLTask
-
-
         public struct ExecutionRun
         {
             // Paths to the scripts (if you want the scripts to run in a certain order then name them 01-script1.sql, 02-script2.sql, etc...)
             public string ScriptPath { get; set; }
+
+            // Paths to the scripts (if you want the scripts to run in a certain order then name them 01-script1.sql, 02-script2.sql, etc...)
+            public TestPassSource StepsFrom { get; set; }
 
             // How to run the scripts
             public SerialOrConcurrentEnum Mode { get; set; }
@@ -836,4 +882,20 @@ namespace SynapseConcurrency
 
 
     } // class
+
+    // Do you want to run in parallel or serial
+    public enum SerialOrConcurrentEnum { Serial, Concurrent }
+
+    // Do you want to run in parallel or serial
+    public enum TestPassSource { ReadFromFolder, ReadFromTelemetryDb }
+
+    public struct SQLTask
+    {
+        public string ScriptName { get; set; }
+        public string ConnectionString { get; set; }
+        public string Label { get; set; }
+        public string SQL { get; set; }
+        public int TestCaseNum { get; set; }
+    } // SQLTask
+
 } //namespace
