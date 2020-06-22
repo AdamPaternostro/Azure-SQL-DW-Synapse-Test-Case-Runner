@@ -64,7 +64,6 @@ namespace SynapseConcurrency
             catch (SqlException e)
             {
                 Console.WriteLine("*********** ERROR in TelemetrySqlHelper: " + e.ToString());
-                //Console.ReadKey();  // <-- is this a good idea during concurrent tests? -ATR
             }
 
             return listOfTasks;
@@ -162,7 +161,6 @@ namespace SynapseConcurrency
             catch (SqlException e)
             {
                 Console.WriteLine("*********** ERROR in TelemetrySqlHelper: " + e.ToString());
-                //Console.ReadKey();  // <-- is this a good idea during concurrent tests? -ATR
             }
 
         }
@@ -249,7 +247,7 @@ namespace SynapseConcurrency
             {
                 Console.WriteLine("*********** ERROR in TelemetrySqlHelper: " + e.ToString());
             }
-
+            
             return sessionId;
         }
 

@@ -30,7 +30,7 @@ namespace SynapseConcurrency
         const string SERVER_NAME = "artcentralsql";
         const string SQL_ADMIN_NAME = "SmallCaseDriver";
         // Assumes all your passwords for all users are the same (if not change the connection string below)
-        const string PASSWORD = "ScrtPsswrd10!";
+        const string PASSWORD = "<password>";
         // Which DWUs do you want to run this test at. You can just do one.
         // "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c", "DW1500c", "DW2000c", "DW2500c", 
         // "DW3000c", "DW5000c", "DW6000c", "DW7500c", "DW10000c", "DW15000c", "DW30000c"
@@ -68,11 +68,11 @@ namespace SynapseConcurrency
         static async Task Main(string[] args)
         {
 
-            //TelemetrySqlHelper.TestMe("Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=ScrtPsswrd10!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            //TelemetrySqlHelper.TestMe("Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=<password>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
             //return;
             //This constant is for temporary use
             const int TMP_WORKLOAD_ID = 2; //Desginates a set of test cases in the telemetry tables for which there exists reporting metadata. Would need to come from somewhere above.
-            const string TMP_CONN_STRING = "Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=ScrtPsswrd10!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+            const string TMP_CONN_STRING = "Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=<password>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
             string DWUs = "DW400c";
 
             try
@@ -290,7 +290,7 @@ namespace SynapseConcurrency
                         DWU = DWUs,
                         Enabled = true,
                         Interations = 1,
-                        Mode = SerialOrConcurrentEnum.Serial,
+                        Mode = SerialOrConcurrentEnum.Concurrent,
                         OptLevel = optomizationLevel,
                         ResourceClass = "smallrc",
                         ResultSetCaching = false,
