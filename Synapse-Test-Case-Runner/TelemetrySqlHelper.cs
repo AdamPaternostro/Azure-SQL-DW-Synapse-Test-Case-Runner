@@ -1,13 +1,13 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
-using System.Text;
-using System.Data.SqlClient;
 using System.Data;
-using System.IO;
-using System.Security.Cryptography;
+using System.Data.SqlClient;
+using System.Text;
 
-namespace SynapseConcurrency
+namespace SynapseTestTelemetry
 {
+
     class TelemetrySqlHelper
     {
 
@@ -18,11 +18,13 @@ namespace SynapseConcurrency
          * GetTestCases
         */
 
-        private static int _testPassId = -1;
+        private const int _noTestActive = -1;
 
-        public static List<SQLTask> GetTestCases(string connString, int workloadId, string scriptPath)
+        private static int _testPassId = _noTestActive;
+
+        public static List<TestCaseInfo> GetTestCases(string connString, int workloadId)
         {
-            List<SQLTask> listOfTasks = new List<SQLTask>();
+            List<TestCaseInfo> listOfTasks = new List<TestCaseInfo>();
             string commandText = String.Format("SELECT SqlFileName, TestCaseNum, TestCaseName FROM telemetry.TestCase WHERE WorkloadId = {0} ORDER BY ExecutionOrder", workloadId);
 
             try
@@ -37,25 +39,16 @@ namespace SynapseConcurrency
                         {
                             while (reader.Read())
                             {
-                                SQLTask sqlTask = new SQLTask();
+                                TestCaseInfo testCase = new TestCaseInfo();
 
                                 string fileName = reader.GetString(0);
-                                string rawSQL = File.ReadAllText(Path.Combine(scriptPath, fileName));
 
-                                // **** NEED TO RE-LOCATE THIS TO A COMMON LOCATION ****
-                                // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
-                                // OVERRIDES: To handle multiple CTASs (append the loop variable)
-                                // What this will do is find "my_ctas_table" and replace it with "my_ctas_table_1" so if we have 2 loops we will get a _1 and _2 table so we do not have collections
-                                //rawSQL = rawSQL.Replace("my_ctas_table", "my_ctas_table_" + i.ToString());
+                                testCase.SqlFileName = reader.GetString(0);
+                                testCase.TestCaseNum = reader.GetInt32(1);
+                                testCase.TestCaseName = reader.GetString(2);
 
 
-                                sqlTask.ConnectionString = connString;
-                                sqlTask.ScriptName = fileName;
-                                sqlTask.Label = reader.GetString(2);
-                                sqlTask.SQL = rawSQL;
-                                sqlTask.TestCaseNum = reader.GetInt32(1);
-
-                                listOfTasks.Add(sqlTask);
+                                listOfTasks.Add(testCase);
                             }
                         }
                     }
@@ -70,7 +63,7 @@ namespace SynapseConcurrency
 
         }
 
-        public static int LogTestPassStart(string connString, int workloadId, string DWU, string cacheState, string optLevel, string scriptMods, string resourceClass, SerialOrConcurrentEnum serialOrConcurrent)
+        public static int LogTestPassStart(string connString, int workloadId, string DWU, string cacheState, string optLevel, string scriptMods, string resourceClass, string serialOrConcurrent)
         {
             int newTestPassId = -1;
             int integerDWU;
@@ -101,7 +94,8 @@ namespace SynapseConcurrency
                         command.Parameters.Add("@OptLevel", SqlDbType.VarChar, 50).Value = optLevel;
                         command.Parameters.Add("@ScriptMods", SqlDbType.VarChar, 50).Value = scriptMods;
                         command.Parameters.Add("@ResourceClass", SqlDbType.NVarChar, 20).Value = resourceClass;
-                        command.Parameters.Add("@ConcurrentOrSerial", SqlDbType.NVarChar, 20).Value = serialOrConcurrent == SerialOrConcurrentEnum.Concurrent ? "Concurrent" : "Serial";
+                        //command.Parameters.Add("@ConcurrentOrSerial", SqlDbType.NVarChar, 20).Value = serialOrConcurrent == SerialOrConcurrentEnum.Concurrent ? "Concurrent" : "Serial";
+                        command.Parameters.Add("@ConcurrentOrSerial", SqlDbType.NVarChar, 20).Value = serialOrConcurrent;
 
                         SqlParameter testPassIdParam = command.Parameters.Add("@test_pass_id", SqlDbType.Int);
                         testPassIdParam.Direction = ParameterDirection.Output;
@@ -129,7 +123,6 @@ namespace SynapseConcurrency
             catch (SqlException e)
             {
                 Console.WriteLine("*********** ERROR in TelemetrySqlHelper: " + e.ToString());
-                //Console.ReadKey();  // <-- is this a good idea during concurrent tests? -ATR
             }
 
             return newTestPassId;
@@ -157,6 +150,8 @@ namespace SynapseConcurrency
                         Console.WriteLine("Ended Logging Test Pass ID {0}", _testPassId);
                     }
                 }
+
+                _testPassId = _noTestActive;
             }
             catch (SqlException e)
             {
@@ -174,6 +169,9 @@ namespace SynapseConcurrency
         */
         public string LogTestRunStart(SqlConnection conn, int testCaseNum)
         {
+            if (_testPassId == _noTestActive)
+                throw new InvalidOperationException("LogTestRunStart cannot be called if a TestPass has not been started first.");
+
             string newTestRunId = "";
 
             try
@@ -218,12 +216,15 @@ namespace SynapseConcurrency
 
         public string LogTestRunEnd(SqlConnection conn, string testCaseRunId, SqlException sqlEx)
         {
+            if (_testPassId == _noTestActive)
+                throw new InvalidOperationException("LogTestRunEnd cannot be called if a TestPass has not been started first.");
+
             string sessionId = "";
             string errText = "NULL";
 
             if (sqlEx != null)
             {
-                errText = String.Format("'ErrorNumber: {0} | ErrorSeverity: {1} | ErrorState: {2} | ErrorProcedure: {3} | ErrorMessage: {4}'", sqlEx.Number, "?", sqlEx.State, sqlEx.Procedure, sqlEx.Message);
+                errText = String.Format("'ErrorNumber: {0} | ErrorSeverity: {1} | ErrorState: {2} | ErrorProcedure: {3} | ErrorMessage: {4}'", sqlEx.Number, "?", sqlEx.State, sqlEx.Procedure, sqlEx.Message.Replace("'", "''"));
             }
 
             StringBuilder sbCmdText = new StringBuilder();
@@ -247,16 +248,16 @@ namespace SynapseConcurrency
             {
                 Console.WriteLine("*********** ERROR in TelemetrySqlHelper: " + e.ToString());
             }
-            
+
             return sessionId;
         }
 
         public static void TestMe(string connString)
         {
 
-            List<SQLTask> tasks = TelemetrySqlHelper.GetTestCases(connString, 2, @"C:\faketestcases");
+            List<TestCaseInfo> tasks = TelemetrySqlHelper.GetTestCases(connString, 1);
 
-            int testPassId = TelemetrySqlHelper.LogTestPassStart(connString, 2, "DW400c", "Unknown", "Stage 1", "v1.0", "smallrc", SerialOrConcurrentEnum.Serial);
+            int testPassId = TelemetrySqlHelper.LogTestPassStart(connString, 1, "DW400c", "Unknown", "Stage 1", "v1.0", "smallrc", "Serial");
 
             using (SqlConnection connection = new SqlConnection(connString))
             {
@@ -264,7 +265,7 @@ namespace SynapseConcurrency
 
                 TelemetrySqlHelper helper = new TelemetrySqlHelper();
 
-                foreach (SQLTask task in tasks)
+                foreach (TestCaseInfo task in tasks)
                 {
                     string testRunId = helper.LogTestRunStart(connection, task.TestCaseNum);
                     helper.LogTestRunEnd(connection, testRunId, null);
@@ -274,6 +275,17 @@ namespace SynapseConcurrency
             TelemetrySqlHelper.LogTestPassEnd(connString);
         }
     }
+
+    public class TestCaseInfo
+    {
+        public string TestCaseID { get; set; }
+        public int TestCaseNum { get; set; }
+        public int WorkloadId { get; set; }
+        public int ExecutionOrder { get; set; }
+        public string TestCaseName { get; set; }
+        public string SqlFileName { get; set; }
+    }
+
 
 }
 

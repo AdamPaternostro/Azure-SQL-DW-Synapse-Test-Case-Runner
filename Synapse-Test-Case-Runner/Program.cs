@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Collections.Generic;
+using SynapseTestTelemetry;
+using System.IO;
 
 namespace SynapseConcurrency
 {
@@ -26,10 +28,11 @@ namespace SynapseConcurrency
 
 
         // **** CHANGE ME ****
-        const string DATABASE_NAME = "ART-DEMO-01";
+        const string DATABASE_NAME = "ART-DEMO-02";
         const string SERVER_NAME = "artcentralsql";
-        const string SQL_ADMIN_NAME = "SmallCaseDriver";
+        const string SQL_ADMIN_NAME = "Admin";
         // Assumes all your passwords for all users are the same (if not change the connection string below)
+        const string ADMIN_PASSWORD = "<password>";
         const string PASSWORD = "<password>";
         // Which DWUs do you want to run this test at. You can just do one.
         // "DW100c", "DW200c", "DW300c", "DW400c", "DW500c", "DW1000c", "DW1500c", "DW2000c", "DW2500c", 
@@ -42,11 +45,11 @@ namespace SynapseConcurrency
 
         // A Global connection string for which has access to the Master Database so we can query the DWUs
         const string SQL_CONNECTION_MASTER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=master;Persist Security Info=False;" +
-            "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=20;";
+            "User ID=" + SQL_ADMIN_NAME + "; Password=" + ADMIN_PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=20;";
 
         // A Global connection string for which has access to the User Database so we can run some SQL
         const string SQL_CONNECTION_USER_DATABASE = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + ";Persist Security Info=False;" +
-            "User ID=" + SQL_ADMIN_NAME + "; Password=" + PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=20;";
+            "User ID=" + SQL_ADMIN_NAME + "; Password=" + ADMIN_PASSWORD + "; MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=20;";
 
         // A connection string for each resource class you are testing
         const string SQL_CONNECTION_SMALL = @"Server=tcp:" + SERVER_NAME + ".database.windows.net,1433;Initial Catalog=" + DATABASE_NAME + "; Persist Security Info=False;" +
@@ -68,36 +71,35 @@ namespace SynapseConcurrency
         static async Task Main(string[] args)
         {
 
-            //TelemetrySqlHelper.TestMe("Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=<password>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            //TelemetrySqlHelper.TestMe(SQL_CONNECTION_SMALL);
             //return;
-            //This constant is for temporary use
-            const int TMP_WORKLOAD_ID = 2; //Desginates a set of test cases in the telemetry tables for which there exists reporting metadata. Would need to come from somewhere above.
-            const string TMP_CONN_STRING = "Server=tcp:artcentralsql.database.windows.net,1433;Initial Catalog=ART-DEMO-01;Persist Security Info=False;User ID=SmallCaseDriver;Password=<password>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
             string DWUs = "DW400c";
+
+            int workloadId = 1;  //TODO: decide how this will be passed in or configured            
 
             try
             {
                 //DateTime minStatisticDate = GetMinStatisticDate();
-                string optomizationLevel = "(none)";
+                string optimizationLevel = "(none)";
                 foreach (string dwuScale in DWUsToTestList)
                 {
-                    /*                
+                    
 
                         // Get the number of DWUs SQL DW is running
-                        string DWUs = GetDWUs();
+                        //string DWUs = GetDWUs();
 
-                        if (DWUs != dwuScale)
-                        {
-                            // Is the database at the corect DWUs?  If not then let's scale it
-                            ScaleDatabase(DWUs, dwuScale);
-                            DWUs = GetDWUs();
-                        }
+                        //if (DWUs != dwuScale)
+                        //{
+                        //    // Is the database at the corect DWUs?  If not then let's scale it
+                        //    ScaleDatabase(DWUs, dwuScale);
+                        //    DWUs = GetDWUs();
+                        //}
 
 
-                        // Replicate all the tables marked for replication and wait until they are all replicated.  
-                        // If you need to alter the stored procedures to adjust which tables to test (e.g. WHERE table_name IS NOT IN ('skip-me-table')
-                        ReplicateTables();
-                    */
+                        //// Replicate all the tables marked for replication and wait until they are all replicated.  
+                        //// If you need to alter the stored procedures to adjust which tables to test (e.g. WHERE table_name IS NOT IN ('skip-me-table')
+                        //ReplicateTables();
+                    
                     // Configuration Runs (these will all run in a loop)
                     List<ExecutionRun> executionRuns = new List<ExecutionRun>();
                     executionRuns.Clear();
@@ -286,12 +288,12 @@ namespace SynapseConcurrency
                     executionRuns.Add(new ExecutionRun()
                     {
                         ReplicatedTables = true,
-                        ConnectionString = TMP_CONN_STRING,
+                        ConnectionString = SQL_CONNECTION_SMALL,
                         DWU = DWUs,
                         Enabled = true,
                         Interations = 1,
                         Mode = SerialOrConcurrentEnum.Concurrent,
-                        OptLevel = optomizationLevel,
+                        OptLevel = optimizationLevel,
                         ResourceClass = "smallrc",
                         ResultSetCaching = false,
                         ScriptPath = @"C:\faketestcases",
@@ -310,11 +312,11 @@ namespace SynapseConcurrency
                             continue;
                         }
 
-                        //bool resultSetCachingStatus = GetResultSetCachingStatus();
-                        //if (resultSetCachingStatus != executionRun.ResultSetCaching)
-                        //{
-                        //    SetResultSetCachingStatus(executionRun.ResultSetCaching);
-                        //}
+                        bool resultSetCachingStatus = GetResultSetCachingStatus();
+                        if (resultSetCachingStatus != executionRun.ResultSetCaching)
+                        {
+                            SetResultSetCachingStatus(executionRun.ResultSetCaching);
+                        }
                         
                         // local variables
                         List<string> sessionIds = new List<string>();
@@ -366,12 +368,19 @@ namespace SynapseConcurrency
                             }
                             else
                             {
-                                sqlScripts.AddRange(TelemetrySqlHelper.GetTestCases(TMP_CONN_STRING, TMP_WORKLOAD_ID, executionRun.ScriptPath));
+                                List<TestCaseInfo> testsFromWorkload = TelemetrySqlHelper.GetTestCases(SQL_CONNECTION_SMALL, workloadId);
+
+                                foreach(TestCaseInfo info in testsFromWorkload)
+                                {
+
+                                    sqlScripts.Add(PrepSQLTask(Path.Combine(executionRun.ScriptPath, info.SqlFileName), executionRun, info.TestCaseName, info.TestCaseNum, i)); 
+                                }
                             }
                         } // i
 
 
-                        int testPassId = TelemetrySqlHelper.LogTestPassStart(TMP_CONN_STRING, TMP_WORKLOAD_ID, executionRun.DWU, "Unknown", executionRun.OptLevel, "Unknown", executionRun.ResourceClass, executionRun.Mode);
+                        string serialOrConcurrent = executionRun.Mode == SerialOrConcurrentEnum.Concurrent ? "Concurrent" : "Serial";
+                        int testPassId = TelemetrySqlHelper.LogTestPassStart(SQL_CONNECTION_SMALL, workloadId, executionRun.DWU, "Unknown", executionRun.OptLevel, "Unknown", executionRun.ResourceClass, serialOrConcurrent);
 
                         if (executionRun.Mode == SerialOrConcurrentEnum.Concurrent)
                         {
@@ -426,80 +435,7 @@ namespace SynapseConcurrency
                             endDate = DateTime.UtcNow;
                         } // serialOrConcurrentMode == SerialOrConcurrentEnum.Concurrent
 
-                        TelemetrySqlHelper.LogTestPassEnd(TMP_CONN_STRING);
-
-                        /*
-                        // Save the data to the Automated Test Tables
-                        try
-                        {
-                            using (SqlConnection connection = new SqlConnection(SQL_CONNECTION_SMALL))
-                            {
-                                connection.Open();
-
-                                using (SqlCommand command = new SqlCommand("SELECT 1 + ISNULL(MAX(AutomatedTestId), 0) FROM telemetry.AutomatedTest", connection))
-                                {
-                                    string AutomatedTestId = command.ExecuteScalar().ToString();
-
-                                    command.CommandText = "INSERT telemetry.AutomatedTest(" +
-                                                                "[AutomatedTestId]," +
-                                                                "[ScriptMods]," +
-                                                                "[Mode]," +
-                                                                "[DWU]," +
-                                                                "[ReplicatedTables]," +
-                                                                "[Interations]," +
-                                                                "[MinStatisticDate]," +
-                                                                "[ResultSetCaching]," +
-                                                                "[ResourceClass]," +
-                                                                "[OptLevel]," +
-                                                                "[StartTime]," +
-                                                                "[EndTime]) VALUES (" +
-                                                                AutomatedTestId.ToString() + "," +
-                                                                "'" + executionRun.ScriptPath.Substring(executionRun.ScriptPath.LastIndexOf("\\") + 1) + "'," +
-                                                                "'" + executionRun.Mode.ToString() + "'," +
-                                                                "'" + DWUs + "', " +
-                                                                (executionRun.ReplicatedTables ? "1" : "0") + "," +
-                                                                executionRun.Interations.ToString() + "," +
-                                                                "'" + minStatisticDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                                                (executionRun.ResultSetCaching ? "1" : "0") + "," +
-                                                                "'" + executionRun.ResourceClass + "'," +
-                                                                "'" + executionRun.OptLevel + "'," +
-                                                                "'" + startDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'," +
-                                                                "'" + endDate.ToString("yyyy-MM-dd HH:mm:ss.fff") + "');";
-
-                                    command.ExecuteNonQuery();
-
-                                    foreach (var sessionId in sessionIds)
-                                    {
-                                        command.CommandText = "INSERT INTO telemetry.AutomatedTestSession (AutomatedTestId,session_id) " +
-                                                              "VALUES (" + AutomatedTestId.ToString() + ",'" + sessionId + " ');";
-                                        command.ExecuteNonQuery();
-                                        Console.WriteLine("Saving Data: " + sessionId);
-                                    } // sessionId
-
-                                    // Capture the exec_requests since we can loose them when the server is paused
-                                    command.CommandText = "INSERT INTO [telemetry].[AutomatedTest_exec_requests] " +
-                                                            "([request_id], [session_id], [status], [submit_time], [start_time], [end_compile_time], [end_time], [total_elapsed_time], " +
-                                                            "[label], [error_id], [database_id], [command], [resource_class], [importance], [group_name], [classifier_name], " +
-                                                            "[resource_allocation_percentage], [result_cache_hit]) " +
-                                                          "SELECT [request_id], [session_id], [status], [submit_time], [start_time], [end_compile_time], [end_time], [total_elapsed_time],  " +
-                                                                 "[label], [error_id], [database_id], [command], [resource_class], [importance], [group_name], [classifier_name],  " +
-                                                                 "[resource_allocation_percentage], [result_cache_hit] " +
-                                                           "FROM sys.dm_pdw_exec_requests " +
-                                                          "WHERE session_id IN     (SELECT session_id FROM [telemetry].[AutomatedTestSession]) " +
-                                                            "AND session_id NOT IN (SELECT session_id FROM [telemetry].[AutomatedTest_exec_requests]);";
-
-                                    command.ExecuteNonQuery();
-                                    Console.WriteLine("Captured sys.dm_pdw_exec_requests");
-                                } // SqlCommand command
-                            }
-                        }
-                        
-                        catch (SqlException e)
-                        {
-                            Console.WriteLine("*********** ERROR: " + e.ToString());
-                            Console.ReadKey();
-                        }
-                        */
+                        TelemetrySqlHelper.LogTestPassEnd(SQL_CONNECTION_SMALL);
 
                         Console.WriteLine("Completed Execution Run: " + executionRun.ScriptPath);
 
@@ -516,6 +452,41 @@ namespace SynapseConcurrency
             Console.WriteLine("Program Complete!");
         } // Main
 
+
+        /// <summary>
+        /// Prepares an instance of SQLTask that will be used to drive one test case execution.
+        /// </summary>
+        private static SQLTask PrepSQLTask(string scriptFilePath, ExecutionRun executionRun, string testCaseName, int testCaseNum, int i)  //TODO: give counter and i arguments better names, or eliminate them
+        {
+            string rawSQL;
+
+            SQLTask sqlTask = new SQLTask();
+
+            rawSQL = System.IO.File.ReadAllText(scriptFilePath);
+
+            string fileName = scriptFilePath.Substring(scriptFilePath.LastIndexOf("\\") + 1).Replace(".sql", string.Empty);
+
+            // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
+            // OVERRIDES: To handle multiple CTASs (append the loop variable)
+            // What this will do is find "my_ctas_table" and replace it with "my_ctas_table_1" so if we have 2 loops we will get a _1 and _2 table so we do not have collections
+            rawSQL = rawSQL.Replace("my_ctas_table", "my_ctas_table_" + i.ToString());
+
+            sqlTask.ConnectionString = executionRun.ConnectionString;
+            sqlTask.ScriptName = fileName;
+            sqlTask.Label = testCaseName;
+            sqlTask.TestCaseNum = testCaseNum;
+            sqlTask.SQL = rawSQL;
+
+            // **** CHANGE ME (OVERRIDES PER CUSTOMER) ****
+            // OVERRIDES: Change certain scripts to run in different classes
+            if (sqlTask.ScriptName.ToUpper() == "????")
+            {
+                // Do whatever you want in here
+                sqlTask.ConnectionString = SQL_CONNECTION_LARGE;
+            }
+
+            return sqlTask;
+        }
 
 
         /// <summary>
